@@ -124,17 +124,13 @@ Buffer Converter::createGLTFBuffer()
 	dataStream.open(QIODeviceBase::WriteOnly);
 
 	// Write indices to bin data
-	// 14 vertices per box trigger
-	for (int i = 0; i < triggerData->getRegionCount(); ++i)
-	{
-		for (int j = 0; j < 14; ++j)
-			dataStream << (ushort)(j);
-	}
+	// 14 vertices for a box region trigger
+	for (int j = 0; j < 14; ++j)
+		dataStream << (ushort)(j);
 
-	// Write the vertices to bin data as triangle strips
-	// Position/rotation/dimension is set up in nodes, these are all the same
-	for (int i = 0; i < triggerData->getRegionCount(); ++i)
-		writeBoxRegion(dataStream); 
+	// Write the vertices to bin data as a triangle strip
+	// Position/rotation/dimension is set up in nodes
+	writeBoxRegion(dataStream); 
 
 	dataStream.close();
 
@@ -191,7 +187,7 @@ Vector4 Converter::EulerToQuatRot(Vector3 euler)
 void Converter::convertTriggersToGLTF()
 {
 	// Get box region counts
-	int landmarkCount = triggerData->getLandmarkCount();
+	//
 	//int stuntCount = triggerData->getSignatureStuntCount();
 	//QList<int> stuntRegionCounts;
 	//for (int i = 0; i < stuntCount; ++i)
@@ -225,118 +221,75 @@ void Converter::convertTriggersToGLTF()
 	pm->buffers.push_back(createGLTFBuffer());
 
 	// Create buffer views
-	pm->bufferViews.push_back(BufferView());
-	pm->bufferViews[0].buffer = 0;
-	pm->bufferViews[0].byteLength = regionCount * 14 * 2;
+	// 0 = indices, 1 = vertices
+	for (int i = 0; i < 2; ++i)
+	{
+		pm->bufferViews.push_back(BufferView());
+		pm->bufferViews[i].buffer = 0;
+	}
+	pm->bufferViews[0].byteLength = 14 * sizeof(ushort);
+	pm->bufferViews[1].byteLength = 14 * (sizeof(float) * 3);
 	pm->bufferViews[0].byteOffset = 0;
-	pm->bufferViews[0].target = TINYGLTF_TARGET_ELEMENT_ARRAY_BUFFER;
-	pm->bufferViews[0].name = "Indices buffer view";
-
-	pm->bufferViews.push_back(BufferView());
-	pm->bufferViews[1].buffer = 0;
-	pm->bufferViews[1].byteLength = regionCount * 14 * sizeof(float) * 3;
 	pm->bufferViews[1].byteOffset = pm->bufferViews[0].byteLength;
-	pm->bufferViews[1].byteStride = 12;
+	pm->bufferViews[1].byteStride = sizeof(float) * 3;
+	pm->bufferViews[0].target = TINYGLTF_TARGET_ELEMENT_ARRAY_BUFFER;
 	pm->bufferViews[1].target = TINYGLTF_TARGET_ARRAY_BUFFER;
+	pm->bufferViews[0].name = "Indices buffer view";
 	pm->bufferViews[1].name = "Vertices buffer view";
 
-	// Create accessors, meshes, and nodes
-	pm->accessors.resize(regionCount * 2); // Allocate ahead of usage
+	// Create accessors
+	// 0 = indices, 1 = vertices
+	for (int i = 0; i < 2; ++i)
+	{
+		pm->accessors.push_back(Accessor());
+		pm->accessors[i].bufferView = i;
+		pm->accessors[i].byteOffset = 0;
+		pm->accessors[i].count = 14;
+	}
+	pm->accessors[0].componentType = TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT;
+	pm->accessors[1].componentType = TINYGLTF_COMPONENT_TYPE_FLOAT;
+	pm->accessors[0].type = TINYGLTF_TYPE_SCALAR;
+	pm->accessors[1].type = TINYGLTF_TYPE_VEC3;
+	pm->accessors[1].minValues = { -0.5, -0.5, -0.5 };
+	pm->accessors[1].maxValues = { 0.5, 0.5, 0.5 };
+	pm->accessors[0].name = "Indices accessor";
+	pm->accessors[1].name = "Vertices accessor";
+
+	// Create mesh
+	pm->meshes.push_back(Mesh());
+	pm->meshes[0].primitives.push_back(Primitive());
+	pm->meshes[0].primitives[0].mode = TINYGLTF_MODE_TRIANGLE_STRIP;
+	pm->meshes[0].primitives[0].indices = 0;
+	pm->meshes[0].primitives[0].attributes["POSITION"] = 1;
+	pm->meshes[0].name = "Mesh";
+
+	// Create nodes
 	for (int i = 0; i < regionCount; ++i)
 	{
-		// Create accessors
-		pm->accessors[i] = Accessor();
-		pm->accessors[i + regionCount] = Accessor();
-		pm->accessors[i].bufferView = 0; // Indices
-		pm->accessors[i + regionCount].bufferView = 1; // Vertices
-		pm->accessors[i].byteOffset = i * 14 * 2;
-		pm->accessors[i + regionCount].byteOffset = i * 14 * sizeof(float) * 3;
-		pm->accessors[i].componentType = TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT;
-		pm->accessors[i + regionCount].componentType = TINYGLTF_COMPONENT_TYPE_FLOAT;
-		pm->accessors[i].type = TINYGLTF_TYPE_SCALAR;
-		pm->accessors[i + regionCount].type = TINYGLTF_TYPE_VEC3;
-		pm->accessors[i].count = 14;
-		pm->accessors[i + regionCount].count = 14;
-		pm->accessors[i + regionCount].minValues = { -0.5, -0.5, -0.5 };
-		pm->accessors[i + regionCount].maxValues = { 0.5, 0.5, 0.5 };
-		pm->accessors[i].name = "Indices accessor " + std::to_string(i);
-		pm->accessors[i + regionCount].name = "Vertices accessor " + std::to_string(i);
-
-		// Create meshes
-		pm->meshes.push_back(Mesh());
-		pm->meshes[i].primitives.push_back(Primitive());
-		pm->meshes[i].primitives[0].mode = TINYGLTF_MODE_TRIANGLE_STRIP;
-		pm->meshes[i].primitives[0].indices = i;
-		pm->meshes[i].primitives[0].attributes["POSITION"] = i + regionCount;
-		pm->meshes[i].name = "Mesh " + std::to_string(i);
-
-		// Create nodes
 		pm->nodes.push_back(Node());
-		pm->nodes[i].mesh = i;
-		BrnTrigger::TriggerRegion currentRegion;
-		if (i < landmarkCount)
-			currentRegion = triggerData->getLandmark(i);
-		else
-			currentRegion = triggerData->getGenericRegion(i - landmarkCount);
-		pm->nodes[i].translation = {
-			currentRegion.getBoxRegion().getPosX(),
-			currentRegion.getBoxRegion().getPosY(),
-			currentRegion.getBoxRegion().getPosZ()
-		};
-		Vector4 rotation = EulerToQuatRot({
-			currentRegion.getBoxRegion().getRotX(),
-			currentRegion.getBoxRegion().getRotY(),
-			currentRegion.getBoxRegion().getRotZ()
-		});
-		pm->nodes[i].rotation = {
-			rotation.getX(),
-			rotation.getY(),
-			rotation.getZ(),
-			rotation.getW()
-		};
-		pm->nodes[i].scale = {
-			currentRegion.getBoxRegion().getDimX(),
-			currentRegion.getBoxRegion().getDimY(),
-			currentRegion.getBoxRegion().getDimZ()
-		};
-
-		// Add custom properties and name to node
-		Value::Object extras;
-		// TriggerRegion
-		extras["TriggerRegion ID"] = Value(currentRegion.getId());
-		extras["TriggerRegion region index"] = Value(currentRegion.getRegionIndex());
-		extras["TriggerRegion type"] = Value((uint8_t)currentRegion.getType());
-		extras["TriggerRegion unknown 0"] = Value(currentRegion.getUnk0());
-		if (i < landmarkCount) // Landmark
-		{
-			extras["Landmark design index"] = Value(triggerData->getLandmark(i).getDesignIndex());
-			extras["Landmark district"] = Value(triggerData->getLandmark(i).getDistrict());
-			extras["Landmark is online"] = Value((bool)triggerData->getLandmark(i).getFlags() & 1);
-
-			uint64_t id = currentRegion.getId();
-			pm->nodes[i].name = "Landmark " + std::to_string(i) + " (" + std::to_string(id) + ")";
-		}
-		else // GenericRegion
-		{
-			int idx = i - landmarkCount;
-			extras["GenericRegion group ID"] = Value(triggerData->getGenericRegion(idx).getGroupId());
-			extras["GenericRegion camera cut 1"] = Value(triggerData->getGenericRegion(idx).getCameraCut1());
-			extras["GenericRegion camera cut 2"] = Value(triggerData->getGenericRegion(idx).getCameraCut2());
-			extras["GenericRegion camera type 1"] = Value((int16_t)triggerData->getGenericRegion(idx).getcameraType1());
-			extras["GenericRegion camera type 2"] = Value((int16_t)triggerData->getGenericRegion(idx).getcameraType2());
-			extras["GenericRegion type"] = Value((uint8_t)triggerData->getGenericRegion(idx).getType());
-			extras["GenericRegion is one way"] = Value((bool)triggerData->getGenericRegion(idx).getIsOneWay());
-
-			uint64_t id = triggerData->getGenericRegion(idx).getGroupId();
-			if (id == 0)
-				id = currentRegion.getId();
-			pm->nodes[i].name = "GenericRegion " + std::to_string(idx) + " (" + std::to_string(id) + ")";
-		}
-		pm->nodes[i].extras = Value(extras);
-
-		// Add nodes to scene
-		pm->scenes[0].nodes.push_back(i);
+		pm->nodes[i].mesh = 0;
 	}
+
+	// TODO: Separate functions to have nodes for:
+	// Landmark, Blackspot, VFXBoxRegion (all TriggerRegion derived)
+	// SignatureStunt, Killzone (all containing GenericRegion arrays)
+	// Remaining GenericRegion triggers (checked against SignatureStunts and Killzones to avoid duplication)
+	// Remaining TriggerRegion triggers (checked against all of the above)
+	// Add starting grids, roaming locations, and spawn locations afterward
+
+	// Get counts
+	int landmarkCount = triggerData->getLandmarkCount();
+	int genericRegionCount = triggerData->getGenericRegionCount();
+	
+	// Update nodes
+	for (int i = 0; i < landmarkCount; ++i) // Landmark nodes
+		convertLandmark(triggerData->getLandmark(i), pm->nodes[i], i);
+	for (int i = 0; i < genericRegionCount; ++i) // Generic region nodes
+		convertGenericRegion(triggerData->getGenericRegion(i), pm->nodes[i + landmarkCount], i);
+
+	// Add node indices to scene
+	for (int i = 0; i < regionCount; ++i)
+		pm->scenes[0].nodes.push_back(i);
 
 	// Set up asset
 	pm->asset.version = "2.0";
@@ -349,4 +302,58 @@ void Converter::convertTriggersToGLTF()
 		true, // embedBuffers
 		true, // pretty print
 		false); // write binary
+}
+
+void Converter::convertLandmark(BrnTrigger::Landmark landmark, Node& node, int index)
+{
+	addBoxRegionTransform(landmark, node);
+
+	Value::Object extras;
+
+	// TriggerRegion fields
+	extras["TriggerRegion ID"] = Value(landmark.getId());
+	extras["TriggerRegion region index"] = Value(landmark.getRegionIndex());
+	extras["TriggerRegion type"] = Value((uint8_t)landmark.getType());
+	extras["TriggerRegion unknown 0"] = Value(landmark.getUnk0());
+
+	// Landmark fields
+	extras["Landmark design index"] = Value(landmark.getDesignIndex());
+	extras["Landmark district"] = Value(landmark.getDistrict());
+	extras["Landmark is online"] = Value((bool)landmark.getFlags() & 1);
+
+	node.extras = Value(extras);
+
+	// Node name
+	uint64_t id = landmark.getId();
+	node.name = "Landmark " + std::to_string(index) + " (" + std::to_string(id) + ")";
+}
+
+void Converter::convertGenericRegion(BrnTrigger::GenericRegion region, tinygltf::Node& node, int index)
+{
+	addBoxRegionTransform(region, node);
+
+	Value::Object extras;
+
+	// TriggerRegion fields
+	extras["TriggerRegion ID"] = Value(region.getId());
+	extras["TriggerRegion region index"] = Value(region.getRegionIndex());
+	extras["TriggerRegion type"] = Value((uint8_t)region.TriggerRegion::getType());
+	extras["TriggerRegion unknown 0"] = Value(region.getUnk0());
+
+	// GenericRegion fields
+	extras["GenericRegion group ID"] = Value(region.getGroupId());
+	extras["GenericRegion camera cut 1"] = Value(region.getCameraCut1());
+	extras["GenericRegion camera cut 2"] = Value(region.getCameraCut2());
+	extras["GenericRegion camera type 1"] = Value((int16_t)region.getcameraType1());
+	extras["GenericRegion camera type 2"] = Value((int16_t)region.getcameraType2());
+	extras["GenericRegion type"] = Value((uint8_t)region.getType());
+	extras["GenericRegion is one way"] = Value((bool)region.getIsOneWay());
+
+	node.extras = Value(extras);
+
+	// Node name
+	uint64_t id = region.getGroupId();
+	if (id == 0)
+		id = region.getId();
+	node.name = "GenericRegion " + std::to_string(index) + " (" + std::to_string(id) + ")";
 }

@@ -34,4 +34,33 @@ private:
 	void writeBoxRegion(DataStream& stream);
 	Vector4 EulerToQuatRot(Vector3 euler);
 	void convertTriggersToGLTF();
+
+	void convertLandmark(BrnTrigger::Landmark landmark, tinygltf::Node& node, int index);
+	void convertGenericRegion(BrnTrigger::GenericRegion region, tinygltf::Node& node, int index);
+
+	template <typename T>
+	void addBoxRegionTransform(T entry, tinygltf::Node& node)
+	{
+		node.translation = {
+		entry.getBoxRegion().getPosX(),
+		entry.getBoxRegion().getPosY(),
+		entry.getBoxRegion().getPosZ()
+		};
+		Vector4 rotation = EulerToQuatRot({
+			entry.getBoxRegion().getRotX(),
+			entry.getBoxRegion().getRotY(),
+			entry.getBoxRegion().getRotZ()
+			});
+		node.rotation = {
+			rotation.getX(),
+			rotation.getY(),
+			rotation.getZ(),
+			rotation.getW()
+		};
+		node.scale = {
+			entry.getBoxRegion().getDimX(),
+			entry.getBoxRegion().getDimY(),
+			entry.getBoxRegion().getDimZ()
+		};
+	}
 };

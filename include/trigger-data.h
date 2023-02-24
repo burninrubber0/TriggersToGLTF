@@ -71,7 +71,7 @@ namespace BrnTrigger
 		int32_t regionCount = 0;
 	};
 
-	// BoxRegions are cuboid triggers. They are the only type used.
+	// Box trigger type. Sphere and line types are not supported.
 	class BoxRegion
 	{
 	public:
@@ -161,7 +161,7 @@ namespace BrnTrigger
 		Flags flags = (Flags)0;
 	};
 
-	// Starting grid for race events. Data exists but is unused in retail.
+	// Starting grid for race events. Unused in retail.
 	class StartingGrid
 	{
 	public:
@@ -175,7 +175,7 @@ namespace BrnTrigger
 		Vector3 startingDirections[8];
 	};
 
-	// TODO: Description
+	// 
 	class SignatureStunt
 	{
 	public:
@@ -319,7 +319,7 @@ namespace BrnTrigger
 
 	};
 
-	// TODO: Description
+	// Spawn locations for roaming rivals (shutdown cars)
 	class RoamingLocation
 	{
 	public:
@@ -333,7 +333,7 @@ namespace BrnTrigger
 		uint8_t districtIndex = 0;
 	};
 
-	// TODO: Description
+	// Vehicle spawn locations in and outside each Junkyard
 	class SpawnLocation
 	{
 		enum class Type : uint8_t;

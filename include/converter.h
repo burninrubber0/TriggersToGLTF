@@ -39,26 +39,29 @@ private:
 	void addTriggerRegionFields(BrnTrigger::TriggerRegion region, tinygltf::Value::Object& extras);
 
 	void convertLandmark(BrnTrigger::Landmark landmark, tinygltf::Node& node, int index);
+	void convertStartingGrid(BrnTrigger::StartingGrid grid, tinygltf::Node& node, int index);
 	void convertBlackspot(BrnTrigger::Blackspot blackspot, tinygltf::Node& node, int index);
 	void convertVfxBoxRegion(BrnTrigger::VFXBoxRegion vfxBoxRegion, tinygltf::Node& node, int index);
 	void convertSignatureStunt(BrnTrigger::SignatureStunt signatureStunt, tinygltf::Node& node, int index);
 	void convertKillzone(BrnTrigger::Killzone killzone, tinygltf::Node& node, int index);
 	void convertGenericRegion(BrnTrigger::GenericRegion region, tinygltf::Node& node, int index);
 	void convertTriggerRegion(BrnTrigger::TriggerRegion triggerRegion, tinygltf::Node& node, int index);
+	void convertRoamingLocation(BrnTrigger::RoamingLocation location, tinygltf::Node& node, int index);
+	void convertSpawnLocation(BrnTrigger::SpawnLocation location, tinygltf::Node& node, int index);
 
 	template <typename T>
 	void addBoxRegionTransform(T entry, tinygltf::Node& node)
 	{
 		node.translation = {
-		entry.getBoxRegion().getPosX(),
-		entry.getBoxRegion().getPosY(),
-		entry.getBoxRegion().getPosZ()
+			entry.getBoxRegion().getPosX(),
+			entry.getBoxRegion().getPosY(),
+			entry.getBoxRegion().getPosZ()
 		};
 		Vector4 rotation = EulerToQuatRot({
 			entry.getBoxRegion().getRotX(),
 			entry.getBoxRegion().getRotY(),
 			entry.getBoxRegion().getRotZ()
-			});
+		});
 		node.rotation = {
 			rotation.getX(),
 			rotation.getY(),
@@ -69,6 +72,35 @@ private:
 			entry.getBoxRegion().getDimX(),
 			entry.getBoxRegion().getDimY(),
 			entry.getBoxRegion().getDimZ()
+		};
+	}
+
+	void addPointTransform(Vector3 pos, Vector3 rot, tinygltf::Node& node)
+	{
+		node.translation = {
+			pos.getX(),
+			pos.getY(),
+			pos.getZ()
+		};
+		Vector4 rotation = EulerToQuatRot({
+			rot.getX(),
+			rot.getY(),
+			rot.getZ()
+		});
+		node.rotation = {
+			rotation.getX(),
+			rotation.getY(),
+			rotation.getZ(),
+			rotation.getW()
+		};
+	}
+
+	void addPointTransform(Vector3 pos, tinygltf::Node& node)
+	{
+		node.translation = {
+			pos.getX(),
+			pos.getY(),
+			pos.getZ()
 		};
 	}
 };

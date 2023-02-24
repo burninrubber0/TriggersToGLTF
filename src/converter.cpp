@@ -267,6 +267,7 @@ void Converter::convertTriggersToGLTF()
 		convertLandmark(triggerData->getLandmark(i), model->nodes[i + landmarkNodeIndex], i);
 		currentNodeCount++;
 		landmarkChildCount += triggerData->getLandmark(i).getStartingGridCount();
+		model->scenes[0].nodes.push_back(landmarkNodeIndex + i + landmarkChildCount - triggerData->getLandmark(i).getStartingGridCount());
 	}
 	int blackspotNodeIndex = currentNodeCount;
 	for (int i = 0; i < triggerData->getBlackspotCount(); ++i)
@@ -275,6 +276,7 @@ void Converter::convertTriggersToGLTF()
 		model->nodes.back().mesh = 0;
 		convertBlackspot(triggerData->getBlackspot(i), model->nodes[blackspotNodeIndex + i], i);
 		currentNodeCount++;
+		model->scenes[0].nodes.push_back(blackspotNodeIndex + i);
 	}
 	int vfxBoxRegionNodeIndex = currentNodeCount;
 	for (int i = 0; i < triggerData->getVfxBoxRegionCount(); ++i)
@@ -283,6 +285,7 @@ void Converter::convertTriggersToGLTF()
 		model->nodes.back().mesh = 0;
 		convertVfxBoxRegion(triggerData->getVfxBoxRegion(i), model->nodes[vfxBoxRegionNodeIndex + i], i);
 		currentNodeCount++;
+		model->scenes[0].nodes.push_back(vfxBoxRegionNodeIndex + i);
 	}
 
 	// Nodes with GenericRegion arrays
@@ -302,6 +305,7 @@ void Converter::convertTriggersToGLTF()
 		convertSignatureStunt(triggerData->getSignatureStunt(i), model->nodes[signatureStuntNodeIndex + i + signatureStuntChildCount], i);
 		currentNodeCount++;
 		signatureStuntChildCount += triggerData->getSignatureStunt(i).getStuntElementCount();
+		model->scenes[0].nodes.push_back(signatureStuntNodeIndex + i + signatureStuntChildCount - triggerData->getSignatureStunt(i).getStuntElementCount());
 	}
 	int killzoneNodeIndex = currentNodeCount;
 	int killzoneChildCount = 0;
@@ -319,6 +323,7 @@ void Converter::convertTriggersToGLTF()
 		convertKillzone(triggerData->getKillzone(i), model->nodes[killzoneNodeIndex + i + killzoneChildCount], i);
 		currentNodeCount++;
 		killzoneChildCount += triggerData->getKillzone(i).getTriggerCount();
+		model->scenes[0].nodes.push_back(killzoneNodeIndex + i + killzoneChildCount - triggerData->getKillzone(i).getTriggerCount());
 	}
 
 	// Remaining GenericRegion nodes
@@ -331,6 +336,7 @@ void Converter::convertTriggersToGLTF()
 			model->nodes.push_back(Node());
 			model->nodes.back().mesh = 0;
 			convertGenericRegion(triggerData->getGenericRegion(i), model->nodes[genericRegionNodeIndex + currentGenericRegionNode], i);
+			model->scenes[0].nodes.push_back(genericRegionNodeIndex + currentGenericRegionNode);
 			currentGenericRegionNode++;
 			currentNodeCount++;
 		}
@@ -346,6 +352,7 @@ void Converter::convertTriggersToGLTF()
 			model->nodes.push_back(Node());
 			model->nodes.back().mesh = 0;
 			convertTriggerRegion(triggerData->getTriggerRegion(i), model->nodes[triggerRegionNodeIndex + currentTriggerRegionNode], i);
+			model->scenes[0].nodes.push_back(triggerRegionNodeIndex + currentTriggerRegionNode);
 			currentTriggerRegionNode++;
 			currentNodeCount++;
 		}
@@ -359,6 +366,7 @@ void Converter::convertTriggersToGLTF()
 		model->nodes.back().mesh = 0;
 		convertRoamingLocation(triggerData->getRoamingLocation(i), model->nodes[roamingLocationNodeIndex + i], i);
 		currentNodeCount++;
+		model->scenes[0].nodes.push_back(roamingLocationNodeIndex + i);
 	}
 	int spawnLocationNodeIndex = currentNodeCount;
 	for (int i = 0; i < triggerData->getSpawnLocationCount(); ++i)
@@ -367,11 +375,8 @@ void Converter::convertTriggersToGLTF()
 		model->nodes.back().mesh = 0;
 		convertSpawnLocation(triggerData->getSpawnLocation(i), model->nodes[spawnLocationNodeIndex + i], i);
 		currentNodeCount++;
+		model->scenes[0].nodes.push_back(spawnLocationNodeIndex + i);
 	}
-
-	// Add node indices to scene
-	for (int i = 0; i < currentNodeCount; ++i)
-		model->scenes[0].nodes.push_back(i);
 
 	// Set up asset
 	model->asset.version = "2.0";

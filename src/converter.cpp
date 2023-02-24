@@ -470,9 +470,12 @@ void Converter::convertSignatureStunt(BrnTrigger::SignatureStunt signatureStunt,
 
 void Converter::convertKillzone(BrnTrigger::Killzone killzone, tinygltf::Node& node, int index)
 {
-	Value::Object extras;
+	Value::Array regionIds;
 	for (int i = 0; i < killzone.getRegionIdCount(); ++i)
-		extras["Region ID " + std::to_string(i)] = Value((int)killzone.getRegionId(i));
+		regionIds.push_back(Value((int)killzone.getRegionId(i)));
+
+	Value::Object extras;
+	extras["Region IDs"] = Value(regionIds);
 	node.extras = Value(extras);
 
 	node.name = "Killzone " + std::to_string(index);
@@ -484,13 +487,13 @@ void Converter::convertGenericRegion(BrnTrigger::GenericRegion region, tinygltf:
 
 	Value::Object extras;
 	addTriggerRegionFields(region, extras);
-	extras["GenericRegion group ID"] = Value(region.getGroupId());
-	extras["GenericRegion camera cut 1"] = Value(region.getCameraCut1());
-	extras["GenericRegion camera cut 2"] = Value(region.getCameraCut2());
-	extras["GenericRegion camera type 1"] = Value((int16_t)region.getcameraType1());
-	extras["GenericRegion camera type 2"] = Value((int16_t)region.getcameraType2());
-	extras["GenericRegion type"] = Value((uint8_t)region.getType());
-	extras["GenericRegion is one way"] = Value((bool)region.getIsOneWay());
+	extras["Group ID"] = Value(region.getGroupId());
+	extras["Camera cut 1"] = Value(region.getCameraCut1());
+	extras["Camera cut 2"] = Value(region.getCameraCut2());
+	extras["Camera type 1"] = Value((int16_t)region.getcameraType1());
+	extras["Camera type 2"] = Value((int16_t)region.getcameraType2());
+	extras["Type"] = Value((uint8_t)region.getType());
+	extras["Is one way"] = Value((bool)region.getIsOneWay());
 	node.extras = Value(extras);
 
 	uint64_t id = region.getGroupId();

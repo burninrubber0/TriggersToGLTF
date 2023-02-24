@@ -142,7 +142,8 @@ namespace BrnTrigger
 		StartingGrid getStartingGrid(int index);
 		uint8_t getDesignIndex() { return designIndex; }
 		uint8_t getDistrict() { return district; }
-		Flags getFlags() { return flags;  }
+		Flags getFlags() { return flags; }
+		bool getIsOnline() { return ((uint8_t)flags & (uint8_t)Flags::isOnline) != 0; };
 
 		int8_t getStartingGridCount() { return startingGridCount; }
 

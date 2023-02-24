@@ -35,8 +35,16 @@ private:
 	Vector4 EulerToQuatRot(Vector3 euler);
 	void convertTriggersToGLTF();
 
+	bool triggerRegionExists(BrnTrigger::TriggerRegion region, bool checkGenericRegions = true);
+	void addTriggerRegionFields(BrnTrigger::TriggerRegion region, tinygltf::Value::Object& extras);
+
 	void convertLandmark(BrnTrigger::Landmark landmark, tinygltf::Node& node, int index);
+	void convertBlackspot(BrnTrigger::Blackspot blackspot, tinygltf::Node& node, int index);
+	void convertVfxBoxRegion(BrnTrigger::VFXBoxRegion vfxBoxRegion, tinygltf::Node& node, int index);
+	void convertSignatureStunt(BrnTrigger::SignatureStunt signatureStunt, tinygltf::Node& node, int index);
+	void convertKillzone(BrnTrigger::Killzone killzone, tinygltf::Node& node, int index);
 	void convertGenericRegion(BrnTrigger::GenericRegion region, tinygltf::Node& node, int index);
+	void convertTriggerRegion(BrnTrigger::TriggerRegion triggerRegion, tinygltf::Node& node, int index);
 
 	template <typename T>
 	void addBoxRegionTransform(T entry, tinygltf::Node& node)

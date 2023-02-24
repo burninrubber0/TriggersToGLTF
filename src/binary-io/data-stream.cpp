@@ -40,6 +40,7 @@ void DataStream::writeString(QString string, quint64 length)
 // Reads a specified number of bytes from this stream to another stream, writing to a specified
 // offset in the other stream. By default, this offset is the current offset of this stream.
 // This is most useful for storing unknown data and padding to prevent data loss
+// TODO: Come up with a more accurate name for this
 void DataStream::readRawData(DataStream& stream, quint32 length, qint64 position)
 {
 	position != -1 ? stream.seek(position) : stream.seek(pos());

@@ -36,20 +36,13 @@ public:
 		return s;
 	}
 
-	// callocs without reading
-	template <typename T>
-	void cAlloc(T*& entries, int count)
-	{
-		entries = (T*)calloc(count, sizeof(T)); // New pointer where the entries will be stored in memory
-		assert(entries != nullptr);
-	}
-
 	// callocs and reads data from the stream using DataStream's operator>>(DataStream&, T&) method
 	template <typename T>
 	void cAllocAndQtRead(T*& entries, int count)
 	{
 		seek((qint64)entries); // Seek to the offset in the stream
-		cAlloc(entries, count);
+		entries = (T*)calloc(count, sizeof(T)); // New pointer where the entries will be stored in memory
+		assert(entries != nullptr);
 		for (int i = 0; i < count; ++i)
 			*this >> entries[i];
 	}
@@ -59,7 +52,8 @@ public:
 	void cAllocAndCustomRead(T*& entries, int count)
 	{
 		seek((qint64)entries); // Seek to the offset in the stream
-		cAlloc(entries, count);
+		entries = (T*)calloc(count, sizeof(T)); // New pointer where the entries will be stored in memory
+		assert(entries != nullptr);
 		for (int i = 0; i < count; ++i)
 			entries[i].read(*this);
 	}

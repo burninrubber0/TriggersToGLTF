@@ -177,10 +177,10 @@ Vector4 Converter::EulerToQuatRot(Vector3 euler)
 	float sr = (float)qSin(euler.getX() * 0.5);
 
 	return Vector4(
-		sr * cp * cy - cr * sp * sy,
-		cr * sp * cy + sr * cp * sy,
-		cr * cp * sy - sr * sp * cy,
-		cr * cp * cy + sr * sp * sy
+		sr * cp * cy + cr * sp * sy,
+		cr * sp * cy - sr * cp * sy,
+		cr * cp * sy + sr * sp * cy,
+		cr * cp * cy - sr * sp * sy
 	);
 }
 

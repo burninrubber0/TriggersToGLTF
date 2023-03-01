@@ -9,6 +9,9 @@
 
 #include <string>
 
+using namespace BrnTrigger;
+using namespace tinygltf;
+
 class Converter
 {
 public:
@@ -23,34 +26,35 @@ private:
 	std::string inFileName;
 	std::string outFileName;
 
-	BrnTrigger::TriggerData* triggerData = nullptr;
+	TriggerData* triggerData = nullptr;
 
+	const int minArgCount = 3;
 	int getArgs(int argc, char* argv[]);
 	int checkArgs(int argc, char* argv[]);
 	void showUsage();
 
 	void readTriggerData();
-	tinygltf::Buffer createGLTFBuffer();
+	Buffer createGLTFBuffer();
 	void writeBoxRegion(DataStream& stream);
 	Vector4 EulerToQuatRot(Vector3 euler);
 	void convertTriggersToGLTF();
 
-	bool triggerRegionExists(BrnTrigger::TriggerRegion region, bool checkGenericRegions = true);
-	void addTriggerRegionFields(BrnTrigger::TriggerRegion region, tinygltf::Value::Object& extras);
+	bool triggerRegionExists(TriggerRegion region, bool checkGenericRegions = true);
+	void addTriggerRegionFields(TriggerRegion region, Value::Object& extras);
 
-	void convertLandmark(BrnTrigger::Landmark landmark, tinygltf::Node& node, int index);
-	void convertStartingGrid(BrnTrigger::StartingGrid grid, tinygltf::Node& node, int index);
-	void convertBlackspot(BrnTrigger::Blackspot blackspot, tinygltf::Node& node, int index);
-	void convertVfxBoxRegion(BrnTrigger::VFXBoxRegion vfxBoxRegion, tinygltf::Node& node, int index);
-	void convertSignatureStunt(BrnTrigger::SignatureStunt signatureStunt, tinygltf::Node& node, int index);
-	void convertKillzone(BrnTrigger::Killzone killzone, tinygltf::Node& node, int index);
-	void convertGenericRegion(BrnTrigger::GenericRegion region, tinygltf::Node& node, int index);
-	void convertTriggerRegion(BrnTrigger::TriggerRegion triggerRegion, tinygltf::Node& node, int index);
-	void convertRoamingLocation(BrnTrigger::RoamingLocation location, tinygltf::Node& node, int index);
-	void convertSpawnLocation(BrnTrigger::SpawnLocation location, tinygltf::Node& node, int index);
+	void convertLandmark(Landmark landmark, Node& node, int index);
+	void convertStartingGrid(StartingGrid grid, Node& node, int index);
+	void convertBlackspot(Blackspot blackspot, Node& node, int index);
+	void convertVfxBoxRegion(VFXBoxRegion vfxBoxRegion, Node& node, int index);
+	void convertSignatureStunt(SignatureStunt signatureStunt, Node& node, int index);
+	void convertKillzone(Killzone killzone, Node& node, int index);
+	void convertGenericRegion(GenericRegion region, Node& node, int index);
+	void convertTriggerRegion(TriggerRegion triggerRegion, Node& node, int index);
+	void convertRoamingLocation(RoamingLocation location, Node& node, int index);
+	void convertSpawnLocation(SpawnLocation location, Node& node, int index);
 
 	template <typename T>
-	void addBoxRegionTransform(T entry, tinygltf::Node& node)
+	void addBoxRegionTransform(T entry, Node& node)
 	{
 		node.translation = {
 			entry.getBoxRegion().getPosX(),
@@ -75,7 +79,7 @@ private:
 		};
 	}
 
-	void addPointTransform(Vector3 pos, Vector3 rot, tinygltf::Node& node)
+	void addPointTransform(Vector3 pos, Vector3 rot, Node& node)
 	{
 		node.translation = {
 			pos.getX(),
@@ -95,7 +99,7 @@ private:
 		};
 	}
 
-	void addPointTransform(Vector3 pos, tinygltf::Node& node)
+	void addPointTransform(Vector3 pos, Node& node)
 	{
 		node.translation = {
 			pos.getX(),

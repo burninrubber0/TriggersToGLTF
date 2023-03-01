@@ -11,8 +11,11 @@
 
 #include <iostream>
 
+using namespace BrnTrigger;
+using namespace tinygltf;
+
 Converter::Converter(int argc, char* argv[])
-	: triggerData(new BrnTrigger::TriggerData)
+	: triggerData(new TriggerData)
 {
 	result = getArgs(argc, argv);
 	if (result != 0)
@@ -67,7 +70,7 @@ int Converter::getArgs(int argc, char* argv[])
 int Converter::checkArgs(int argc, char* argv[])
 {
 	// Ensure minimum argument count is reached
-	if (argc < 3)
+	if (argc < minArgCount)
 	{
 		showUsage();
 		return 1;
@@ -96,7 +99,7 @@ int Converter::checkArgs(int argc, char* argv[])
 
 void Converter::showUsage()
 {
-	std::cout << "Usage: TriggersToGLTF [-p PLATFORM] <input triggers> <output glTF>\n\n"
+	std::cout << "Usage: TriggersToGLTF [-p PLATFORM] <input file> <output file>\n\n"
 		<< "Options:\n -p   File platform. PS3, X360, PC, PS4, or NX. Default: PC";
 }
 
@@ -106,12 +109,6 @@ void Converter::readTriggerData()
 	triggerData->read(inStream);
 	inStream.close();
 }
-
-// --------------------
-// GLTF stuff
-// --------------------
-
-using namespace tinygltf;
 
 // Creates a file with the box regions converted to triangles
 // Saved as Matrix 3x3 (MAT3)
@@ -239,13 +236,6 @@ void Converter::convertTriggersToGLTF()
 	model->meshes[0].primitives[0].indices = 0;
 	model->meshes[0].primitives[0].attributes["POSITION"] = 1;
 	model->meshes[0].name = "Mesh";
-
-	// TODO: Separate functions to have nodes for:
-	// Landmark, Blackspot, VFXBoxRegion (all TriggerRegion derived)
-	// SignatureStunt, Killzone (all containing GenericRegion arrays)
-	// Remaining GenericRegion triggers (checked against SignatureStunts and Killzones to avoid duplication)
-	// Remaining TriggerRegion triggers (checked against all of the above)
-	// Add starting grids, roaming locations, and spawn locations afterward
 
 	// Create nodes
 	// TriggerRegion derived nodes
@@ -383,7 +373,7 @@ void Converter::convertTriggersToGLTF()
 	model->asset.generator = "tinygltf";
 	
 	// Save it to a file
-	tinygltf::TinyGLTF gltf;
+	TinyGLTF gltf;
 	gltf.WriteGltfSceneToFile(model.data(), outFileName,
 		true, // embedImages
 		true, // embedBuffers
@@ -391,7 +381,7 @@ void Converter::convertTriggersToGLTF()
 		false); // write binary
 }
 
-bool Converter::triggerRegionExists(BrnTrigger::TriggerRegion region, bool checkGenericRegions)
+bool Converter::triggerRegionExists(TriggerRegion region, bool checkGenericRegions)
 {
 	int32_t id = region.getId();
 	for (int i = 0; i < triggerData->getLandmarkCount(); ++i)
@@ -437,7 +427,7 @@ bool Converter::triggerRegionExists(BrnTrigger::TriggerRegion region, bool check
 	return false;
 }
 
-void Converter::addTriggerRegionFields(BrnTrigger::TriggerRegion region, Value::Object& extras)
+void Converter::addTriggerRegionFields(TriggerRegion region, Value::Object& extras)
 {
 	extras["TriggerRegion ID"] = Value(region.getId());
 	extras["TriggerRegion region index"] = Value(region.getRegionIndex());
@@ -445,7 +435,7 @@ void Converter::addTriggerRegionFields(BrnTrigger::TriggerRegion region, Value::
 	extras["TriggerRegion unknown 0"] = Value(region.getUnk0());
 }
 
-void Converter::convertLandmark(BrnTrigger::Landmark landmark, Node& node, int index)
+void Converter::convertLandmark(Landmark landmark, Node& node, int index)
 {
 	addBoxRegionTransform(landmark, node);
 
@@ -459,13 +449,13 @@ void Converter::convertLandmark(BrnTrigger::Landmark landmark, Node& node, int i
 	node.name = "Landmark " + std::to_string(index) + " (" + std::to_string(landmark.getId()) + ")";
 }
 
-void Converter::convertStartingGrid(BrnTrigger::StartingGrid grid, Node& node, int index)
+void Converter::convertStartingGrid(StartingGrid grid, Node& node, int index)
 {
 	for (int i = 0; i < 8; ++i)
 		addPointTransform(grid.getStartingPosition(i), grid.getStartingDirection(i), node);
 }
 
-void Converter::convertBlackspot(BrnTrigger::Blackspot blackspot, Node& node, int index)
+void Converter::convertBlackspot(Blackspot blackspot, Node& node, int index)
 {
 	addBoxRegionTransform(blackspot, node);
 
@@ -478,14 +468,14 @@ void Converter::convertBlackspot(BrnTrigger::Blackspot blackspot, Node& node, in
 	node.name = "Blackspot " + std::to_string(index) + " (" + std::to_string(blackspot.getId()) + ")";
 }
 
-void Converter::convertVfxBoxRegion(BrnTrigger::VFXBoxRegion vfxBoxRegion, Node& node, int index)
+void Converter::convertVfxBoxRegion(VFXBoxRegion vfxBoxRegion, Node& node, int index)
 {
 	addBoxRegionTransform(vfxBoxRegion, node);
 
 	node.name = "VFXBoxRegion " + std::to_string(index) + " (" + std::to_string(vfxBoxRegion.getId()) + ")";
 }
 
-void Converter::convertSignatureStunt(BrnTrigger::SignatureStunt signatureStunt, Node& node, int index)
+void Converter::convertSignatureStunt(SignatureStunt signatureStunt, Node& node, int index)
 {
 	Value::Object extras;
 	extras["ID"] = Value((int)signatureStunt.getId());
@@ -495,7 +485,7 @@ void Converter::convertSignatureStunt(BrnTrigger::SignatureStunt signatureStunt,
 	node.name = "SignatureStunt " + std::to_string(index) + " (" + std::to_string(signatureStunt.getId()) + ")";
 }
 
-void Converter::convertKillzone(BrnTrigger::Killzone killzone, Node& node, int index)
+void Converter::convertKillzone(Killzone killzone, Node& node, int index)
 {
 	Value::Array regionIds;
 	for (int i = 0; i < killzone.getRegionIdCount(); ++i)
@@ -508,7 +498,7 @@ void Converter::convertKillzone(BrnTrigger::Killzone killzone, Node& node, int i
 	node.name = "Killzone " + std::to_string(index);
 }
 
-void Converter::convertGenericRegion(BrnTrigger::GenericRegion region, Node& node, int index)
+void Converter::convertGenericRegion(GenericRegion region, Node& node, int index)
 {
 	addBoxRegionTransform(region, node);
 
@@ -529,14 +519,14 @@ void Converter::convertGenericRegion(BrnTrigger::GenericRegion region, Node& nod
 	node.name = "GenericRegion " + std::to_string(index) + " (" + std::to_string(id) + ")";
 }
 
-void Converter::convertTriggerRegion(BrnTrigger::TriggerRegion triggerRegion, Node& node, int index)
+void Converter::convertTriggerRegion(TriggerRegion triggerRegion, Node& node, int index)
 {
 	addBoxRegionTransform(triggerRegion, node);
 
 	node.name = "TriggerRegion " + std::to_string(index) + " (" + std::to_string(triggerRegion.getId()) + ")";
 }
 
-void Converter::convertRoamingLocation(BrnTrigger::RoamingLocation location, Node& node, int index)
+void Converter::convertRoamingLocation(RoamingLocation location, Node& node, int index)
 {
 	addPointTransform(location.getPosition(), node);
 
@@ -547,7 +537,7 @@ void Converter::convertRoamingLocation(BrnTrigger::RoamingLocation location, Nod
 	node.name = "RoamingLocation " + std::to_string(index);
 }
 
-void Converter::convertSpawnLocation(BrnTrigger::SpawnLocation location, Node& node, int index)
+void Converter::convertSpawnLocation(SpawnLocation location, Node& node, int index)
 {
 	addPointTransform(location.getPosition(), location.getDirection(), node);
 

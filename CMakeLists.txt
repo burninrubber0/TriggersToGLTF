@@ -10,6 +10,7 @@ set(SOURCES
 	src/main.cpp
 	src/converter.cpp
 	src/trigger-data.cpp
+	src/types.cpp
 	src/binary-io/data-stream.cpp
 	)
 

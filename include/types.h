@@ -12,66 +12,30 @@ typedef uint64_t CgsID;
 class Vector3
 {
 public:
-	Vector3()
-	{
-		
-	}
+	Vector3(bool isVpu = false);
+	Vector3(float x, float y, float z, bool vpu = false);
 
-	Vector3(float x, float y, float z)
-	{
-		this->x = x;
-		this->y = y;
-		this->z = z;
-	}
-
-	void readFPU(DataStream& file)
-	{
-		file >> x;
-		file >> y;
-		file >> z;
-	}
-
-	void readVPU(DataStream& file)
-	{
-		file >> x;
-		file >> y;
-		file >> z;
-		file.skip(0x4);
-	}
+	void read(DataStream& stream);
 
 	float getX() { return x; }
 	float getY() { return y; }
 	float getZ() { return z; }
+	bool getIsVpu() { return isVpu; }
 
 private:
 	float x = 0;
 	float y = 0;
 	float z = 0;
+	bool isVpu = false;
 };
 
 class Vector4
 {
 public:
-	Vector4()
-	{
+	Vector4();
+	Vector4(float x, float y, float z, float w);
 
-	}
-
-	Vector4(float x, float y, float z, float w)
-	{
-		this->x = x;
-		this->y = y;
-		this->z = z;
-		this->w = w;
-	}
-
-	void read(DataStream& file)
-	{
-		file >> x;
-		file >> y;
-		file >> z;
-		file >> w;
-	}
+	void read(DataStream& stream);
 
 	float getX() { return x; }
 	float getY() { return y; }
@@ -84,32 +48,3 @@ private:
 	float z = 0;
 	float w = 0;
 };
-
-// In-game districts
-// Not needed yet
-//enum class District
-//{
-//	oceanView,
-//	westAcres,
-//	twinBridges,
-//	bigSurfBeach,
-//	easternShore,
-//	hillsidePass,
-//	heartbreakHills,
-//	rockridgeCliffs,
-//	southBay,
-//	parkVale,
-//	paradiseWharf,
-//	crystalSummit,
-//	lonePeaks,
-//	sunsetValley,
-//	downtown,
-//	riverCity,
-//	motorCity,
-//	waterfront,
-//	paradiseKeysBridge,
-//	northBeach,
-//	midTown,
-//	southCoast,
-//	perrensPoint
-//};

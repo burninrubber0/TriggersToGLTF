@@ -21,6 +21,15 @@ void Vector3::read(DataStream& stream)
 		stream.skip(0x4);
 }
 
+void Vector3::write(DataStream& stream)
+{
+	stream << x;
+	stream << y;
+	stream << z;
+	if (isVpu)
+		stream.skip(0x4);
+}
+
 Vector4::Vector4()
 {
 
@@ -38,4 +47,12 @@ void Vector4::read(DataStream& stream)
 	stream >> y;
 	stream >> z;
 	stream >> w;
+}
+
+void Vector4::write(DataStream& stream)
+{
+	stream << x;
+	stream << y;
+	stream << z;
+	stream << w;
 }

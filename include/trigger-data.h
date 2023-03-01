@@ -4,23 +4,13 @@
 
 namespace BrnTrigger
 {
-	// Box trigger type. Sphere and line types are not supported.
-	class BoxRegion
+	// Transform for box triggers.
+	// Sphere and line types are not supported.
+	struct BoxRegion
 	{
-	public:
-		void read(DataStream& file);
+		void read(DataStream& in);
+		void write(DataStream& out);
 
-		float getPosX() { return positionX; }
-		float getPosY() { return positionY; }
-		float getPosZ() { return positionZ; }
-		float getRotX() { return rotationX; }
-		float getRotY() { return rotationY; }
-		float getRotZ() { return rotationZ; }
-		float getDimX() { return dimensionX; }
-		float getDimY() { return dimensionY; }
-		float getDimZ() { return dimensionZ; }
-
-	private:
 		float32_t positionX = 0;
 		float32_t positionY = 0;
 		float32_t positionZ = 0;
@@ -32,22 +22,9 @@ namespace BrnTrigger
 		float32_t dimensionZ = 0;
 	};
 
-	// The actual data for the trigger. Used on nearly all types.
-	class TriggerRegion
+	// General container for box triggers.
+	struct TriggerRegion
 	{
-		enum class Type : uint8_t;
-
-	public:
-		void read(DataStream& file);
-
-		BoxRegion getBoxRegion() { return boxRegion; }
-		int32_t getId() { return id; }
-		int16_t getRegionIndex() { return regionIndex; }
-		Type getType() { return type; }
-		uint8_t getUnk0() { return unk0; }
-
-	private:
-		// The type of trigger region.
 		enum class Type : uint8_t
 		{
 			landmark,
@@ -55,6 +32,9 @@ namespace BrnTrigger
 			genericRegion,
 			vfxBoxRegion
 		};
+
+		void read(DataStream& file);
+		void write(DataStream& file);
 
 		BoxRegion boxRegion;
 		int32_t id = 0;
@@ -64,43 +44,29 @@ namespace BrnTrigger
 	};
 
 	// Starting grid for race events. Unused in retail.
-	class StartingGrid
+	struct StartingGrid
 	{
 	public:
 		StartingGrid();
 
 		void read(DataStream& file);
+		void write(DataStream& file);
 
-		Vector3 getStartingPosition(int index) { return startingPositions[index]; }
-		Vector3 getStartingDirection(int index) { return startingDirections[index]; }
-
-	private:
 		Vector3 startingPositions[8];
 		Vector3 startingDirections[8];
 	};
 
-	// Used for finish lines and event starts.
+	// Used for finish lines and checkpoints (but not event starts).
 	// Big Surf Island has an overabundance of Landmarks.
-	class Landmark : public TriggerRegion
+	struct Landmark : public TriggerRegion
 	{
-		enum class Flags : uint8_t;
-
-	public:
-		void read(DataStream& file);
-
-		StartingGrid getStartingGrid(int index) { return startingGrids[index]; }
-		int8_t getStartingGridCount() { return startingGridCount; }
-		uint8_t getDesignIndex() { return designIndex; }
-		uint8_t getDistrict() { return district; }
-		Flags getFlags() { return flags; }
-		bool getIsOnline() { return ((uint8_t)flags & (uint8_t)Flags::isOnline) != 0; };
-
-	private:
-		// The flags field in the Landmark structure.
 		enum class Flags : uint8_t
 		{
 			isOnline = 1 << 0
 		};
+
+		void read(DataStream& file);
+		void write(DataStream& file);
 
 		StartingGrid* startingGrids;
 		int8_t startingGridCount = 0;
@@ -109,25 +75,9 @@ namespace BrnTrigger
 		Flags flags = (Flags)0;
 	};
 
-	// Generic box trigger. The main trigger type used. Used for many things.
-	class GenericRegion : public TriggerRegion
+	// Generic box trigger. This is the main trigger type used by the game.
+	struct GenericRegion : public TriggerRegion
 	{
-		enum class StuntCameraType : int8_t;
-		enum class Type : uint8_t;
-
-	public:
-		void read(DataStream& file);
-
-		int32_t getGroupId() { return groupId; }
-		int16_t getCameraCut1() { return cameraCut1; }
-		int16_t getCameraCut2() { return cameraCut2; }
-		StuntCameraType getcameraType1() { return cameraType1; }
-		StuntCameraType getcameraType2() { return cameraType2; }
-		Type getType() { return type; }
-		int8_t getIsOneWay() { return isOneWay; }
-
-	private:
-		// Camera type used on GenericRegion stunts.
 		enum class StuntCameraType : int8_t
 		{
 			noCuts,
@@ -135,8 +85,6 @@ namespace BrnTrigger
 			normal
 		};
 
-		// The type of generic region. Uses include audio, drivethru, and camera
-		// triggers, among others.
 		enum class Type : uint8_t
 		{
 			junkyard,
@@ -173,6 +121,9 @@ namespace BrnTrigger
 			ramp
 		};
 
+		void read(DataStream& file);
+		void write(DataStream& file);
+
 		int32_t groupId = 0; // GameDB ID
 		int16_t cameraCut1 = 0;
 		int16_t cameraCut2 = 0;
@@ -183,47 +134,37 @@ namespace BrnTrigger
 	};
 
 	// Accident blackspot (crash mode). Unused in retail.
-	class Blackspot : public TriggerRegion
+	struct Blackspot : public TriggerRegion
 	{
-		enum class ScoreType : uint8_t;
-
-	public:
-		void read(DataStream& file);
-
-		ScoreType getScoreType() { return scoreType; }
-		int32_t getScoreAmount() { return scoreAmount; }
-
-	private:
-		// The Blackspot scoring system. Note that both are used in Showtime.
 		enum class ScoreType : uint8_t
 		{
 			distance,
 			carCount
 		};
 
+		void read(DataStream& file);
+		void write(DataStream& file);
+
 		ScoreType scoreType = (ScoreType)0;
 		int32_t scoreAmount = 0;
 	};
 
 	// VFX region. Unused in retail.
-	class VFXBoxRegion : public TriggerRegion
+	struct VFXBoxRegion : public TriggerRegion
 	{
-	public:
 		void read(DataStream& file);
+		void write(DataStream& file);
 	};
 
 	// TODO: Description
-	class SignatureStunt
+	struct SignatureStunt
 	{
-	public:
 		void read(DataStream& file);
+		void write(DataStream& file);
 
-		CgsID getId() { return id; }
-		int64_t getCamera() { return camera; }
 		GenericRegion getStuntElement(int index) { return stuntElements[index][0]; }
-		int32_t getStuntElementCount() { return stuntElementCount; }
+		void setStuntElement(GenericRegion region, int index) { stuntElements[index][0] = region; }
 
-	private:
 		CgsID id = 0;
 		int64_t camera = 0;
 		GenericRegion** stuntElements = nullptr;
@@ -231,17 +172,14 @@ namespace BrnTrigger
 	};
 
 	// TODO: Description
-	class Killzone
+	struct Killzone
 	{
-	public:
 		void read(DataStream& file);
+		void write(DataStream& file);
 
 		GenericRegion getTrigger(int index) { return triggers[index][0]; }
-		int32_t getTriggerCount() { return triggerCount; }
-		CgsID getRegionId(int index) { return regionIds[index]; }
-		int32_t getRegionIdCount() { return regionIdCount; }
+		void setTrigger(GenericRegion region, int index) { triggers[index][0] = region; }
 
-	private:
 		GenericRegion** triggers = nullptr;
 		int32_t triggerCount = 0;
 		CgsID* regionIds = nullptr; // GameDB IDs
@@ -249,34 +187,18 @@ namespace BrnTrigger
 	};
 
 	// Spawn locations for roaming rivals (shutdown cars)
-	class RoamingLocation
+	struct RoamingLocation
 	{
-	public:
 		void read(DataStream& file);
+		void write(DataStream& file);
 
-		Vector3 getPosition() { return position; }
-		uint8_t getDistrictIndex() { return districtIndex; }
-
-	private:
 		Vector3 position = Vector3(true);
 		uint8_t districtIndex = 0;
 	};
 
 	// Vehicle spawn locations in and outside each Junkyard
-	class SpawnLocation
+	struct SpawnLocation
 	{
-		enum class Type : uint8_t;
-
-	public:
-		void read(DataStream& file);
-
-		Vector3 getPosition() { return position; }
-		Vector3 getDirection() { return direction; }
-		CgsID getJunkyardId() { return junkyardId; }
-		Type getType() { return type; }
-
-	private:
-		// The type of spawn at a spawn location.
 		enum class Type : uint8_t
 		{
 			playerSpawn,
@@ -284,6 +206,9 @@ namespace BrnTrigger
 			carSelectRight,
 			carUnlock
 		};
+
+		void read(DataStream& file);
+		void write(DataStream& file);
 
 		Vector3 position = Vector3(true);
 		Vector3 direction = Vector3(true);
@@ -293,36 +218,14 @@ namespace BrnTrigger
 
 	// The header for the TriggerData resource.
 	// Lists all relevant offsets and counts.
-	class TriggerData
+	struct TriggerData
 	{
-	public:
 		void read(DataStream& file);
+		void write(DataStream& file);
 
-		int32_t getVersionNumber() { return versionNumber; }
-		uint32_t getSize() { return size; }
-		Vector3 getPlayerStartPosition() { return playerStartPosition; }
-		Vector3 getPlayerStartDirection() { return playerStartDirection; }
-		Landmark getLandmark(int index) { return landmarks[index]; }
-		int32_t getLandmarkCount() { return landmarkCount; }
-		int32_t getOnlineLandmarkCount() { return onlineLandmarkCount; }
-		SignatureStunt getSignatureStunt(int index) { return signatureStunts[index]; }
-		int32_t getSignatureStuntCount() { return signatureStuntCount; }
-		GenericRegion getGenericRegion(int index) { return genericRegions[index]; }
-		int32_t getGenericRegionCount() { return genericRegionCount; }
-		Killzone getKillzone(int index) { return killzones[index]; }
-		int32_t getKillzoneCount() { return killzoneCount; }
-		Blackspot getBlackspot(int index) { return blackspots[index]; }
-		int32_t getBlackspotCount() { return blackspotCount; }
-		VFXBoxRegion getVfxBoxRegion(int index) { return vfxBoxRegions[index]; }
-		int32_t getVfxBoxRegionCount() { return vfxBoxRegionCount; }
-		RoamingLocation getRoamingLocation(int index) { return roamingLocations[index]; }
-		int32_t getRoamingLocationCount() { return roamingLocationCount; }
-		SpawnLocation getSpawnLocation(int index) { return spawnLocations[index]; }
-		int32_t getSpawnLocationCount() { return spawnLocationCount; }
-		TriggerRegion getTriggerRegion(int index) { return regions[index][0]; }
-		int32_t getRegionCount() { return regionCount; }
+		TriggerRegion getRegion(int index) { return regions[index][0]; }
+		void setRegion(TriggerRegion region, int index) { regions[index][0] = region; }
 
-	private:
 		int32_t versionNumber = 0;
 		uint32_t size = 0;
 		Vector3 playerStartPosition = Vector3(true);
@@ -336,7 +239,6 @@ namespace BrnTrigger
 		int32_t genericRegionCount = 0;
 		Killzone* killzones = nullptr;
 		int32_t killzoneCount = 0;
-		Blackspot* fileBlackspots = nullptr;
 		Blackspot* blackspots = nullptr;
 		int32_t blackspotCount = 0;
 		VFXBoxRegion* vfxBoxRegions = nullptr;

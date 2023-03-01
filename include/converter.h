@@ -57,54 +57,54 @@ private:
 	void addBoxRegionTransform(T entry, Node& node)
 	{
 		node.translation = {
-			entry.getBoxRegion().getPosX(),
-			entry.getBoxRegion().getPosY(),
-			entry.getBoxRegion().getPosZ()
+			entry.boxRegion.positionX,
+			entry.boxRegion.positionY,
+			entry.boxRegion.positionZ
 		};
 		Vector4 rotation = EulerToQuatRot({
-			entry.getBoxRegion().getRotX(),
-			entry.getBoxRegion().getRotY(),
-			entry.getBoxRegion().getRotZ()
+			entry.boxRegion.rotationX,
+			entry.boxRegion.rotationY,
+			entry.boxRegion.rotationZ
 		});
 		node.rotation = {
-			rotation.getX(),
-			rotation.getY(),
-			rotation.getZ(),
-			rotation.getW()
+			rotation.x,
+			rotation.y,
+			rotation.z,
+			rotation.w
 		};
 		node.scale = {
-			entry.getBoxRegion().getDimX(),
-			entry.getBoxRegion().getDimY(),
-			entry.getBoxRegion().getDimZ()
+			entry.boxRegion.dimensionX,
+			entry.boxRegion.dimensionY,
+			entry.boxRegion.dimensionZ
 		};
 	}
 
 	void addPointTransform(Vector3 pos, Vector3 rot, Node& node)
 	{
 		node.translation = {
-			pos.getX(),
-			pos.getY(),
-			pos.getZ()
+			pos.x,
+			pos.y,
+			pos.z
 		};
 		Vector4 rotation = EulerToQuatRot({
-			rot.getX(),
-			rot.getY(),
-			rot.getZ()
+			rot.x,
+			rot.y,
+			rot.z
 		});
 		node.rotation = {
-			rotation.getX(),
-			rotation.getY(),
-			rotation.getZ(),
-			rotation.getW()
+			rotation.x,
+			rotation.y,
+			rotation.z,
+			rotation.w
 		};
 	}
 
 	void addPointTransform(Vector3 pos, Node& node)
 	{
 		node.translation = {
-			pos.getX(),
-			pos.getY(),
-			pos.getZ()
+			pos.x,
+			pos.y,
+			pos.z
 		};
 	}
 };

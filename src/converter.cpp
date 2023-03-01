@@ -166,12 +166,12 @@ void Converter::writeBoxRegion(DataStream& stream)
 // Modified from https://stackoverflow.com/a/70462919
 Vector4 Converter::EulerToQuatRot(Vector3 euler)
 {
-	float cy = (float)qCos(euler.getZ() * 0.5);
-	float sy = (float)qSin(euler.getZ() * 0.5);
-	float cp = (float)qCos(euler.getY() * 0.5);
-	float sp = (float)qSin(euler.getY() * 0.5);
-	float cr = (float)qCos(euler.getX() * 0.5);
-	float sr = (float)qSin(euler.getX() * 0.5);
+	float cy = (float)qCos(euler.z * 0.5);
+	float sy = (float)qSin(euler.z * 0.5);
+	float cp = (float)qCos(euler.y * 0.5);
+	float sp = (float)qSin(euler.y * 0.5);
+	float cr = (float)qCos(euler.x * 0.5);
+	float sr = (float)qSin(euler.x * 0.5);
 
 	return Vector4(
 		sr * cp * cy + cr * sp * sy,
@@ -242,38 +242,38 @@ void Converter::convertTriggersToGLTF()
 	int currentNodeCount = 0;
 	int landmarkNodeIndex = currentNodeCount;
 	int landmarkChildCount = 0;
-	for (int i = 0; i < triggerData->getLandmarkCount(); ++i)
+	for (int i = 0; i < triggerData->landmarkCount; ++i)
 	{
 		model->nodes.push_back(Node());
 		model->nodes.back().mesh = 0;
-		for (int j = 0; j < triggerData->getLandmark(i).getStartingGridCount(); ++j)
+		for (int j = 0; j < triggerData->landmarks[i].startingGridCount; ++j)
 		{
 			model->nodes.push_back(Node());
 			model->nodes.back().mesh = 0;
 			model->nodes[landmarkNodeIndex + i + landmarkChildCount].children.push_back(landmarkNodeIndex + i + landmarkChildCount + j + 1);
-			convertStartingGrid(triggerData->getLandmark(i).getStartingGrid(j), model->nodes[landmarkNodeIndex + i + landmarkChildCount + j + 1], j);
+			convertStartingGrid(triggerData->landmarks[i].startingGrids[j], model->nodes[landmarkNodeIndex + i + landmarkChildCount + j + 1], j);
 			currentNodeCount++;
 		}
-		convertLandmark(triggerData->getLandmark(i), model->nodes[i + landmarkNodeIndex], i);
+		convertLandmark(triggerData->landmarks[i], model->nodes[i + landmarkNodeIndex], i);
 		currentNodeCount++;
-		landmarkChildCount += triggerData->getLandmark(i).getStartingGridCount();
-		model->scenes[0].nodes.push_back(landmarkNodeIndex + i + landmarkChildCount - triggerData->getLandmark(i).getStartingGridCount());
+		landmarkChildCount += triggerData->landmarks[i].startingGridCount;
+		model->scenes[0].nodes.push_back(landmarkNodeIndex + i + landmarkChildCount - triggerData->landmarks[i].startingGridCount);
 	}
 	int blackspotNodeIndex = currentNodeCount;
-	for (int i = 0; i < triggerData->getBlackspotCount(); ++i)
+	for (int i = 0; i < triggerData->blackspotCount; ++i)
 	{
 		model->nodes.push_back(Node());
 		model->nodes.back().mesh = 0;
-		convertBlackspot(triggerData->getBlackspot(i), model->nodes[blackspotNodeIndex + i], i);
+		convertBlackspot(triggerData->blackspots[i], model->nodes[blackspotNodeIndex + i], i);
 		currentNodeCount++;
 		model->scenes[0].nodes.push_back(blackspotNodeIndex + i);
 	}
 	int vfxBoxRegionNodeIndex = currentNodeCount;
-	for (int i = 0; i < triggerData->getVfxBoxRegionCount(); ++i)
+	for (int i = 0; i < triggerData->vfxBoxRegionCount; ++i)
 	{
 		model->nodes.push_back(Node());
 		model->nodes.back().mesh = 0;
-		convertVfxBoxRegion(triggerData->getVfxBoxRegion(i), model->nodes[vfxBoxRegionNodeIndex + i], i);
+		convertVfxBoxRegion(triggerData->vfxBoxRegions[i], model->nodes[vfxBoxRegionNodeIndex + i], i);
 		currentNodeCount++;
 		model->scenes[0].nodes.push_back(vfxBoxRegionNodeIndex + i);
 	}
@@ -281,51 +281,51 @@ void Converter::convertTriggersToGLTF()
 	// Nodes with GenericRegion arrays
 	int signatureStuntNodeIndex = currentNodeCount;
 	int signatureStuntChildCount = 0;
-	for (int i = 0; i < triggerData->getSignatureStuntCount(); ++i)
+	for (int i = 0; i < triggerData->signatureStuntCount; ++i)
 	{
 		model->nodes.push_back(Node());
-		for (int j = 0; j < triggerData->getSignatureStunt(i).getStuntElementCount(); ++j)
+		for (int j = 0; j < triggerData->signatureStunts[i].stuntElementCount; ++j)
 		{
 			model->nodes.push_back(Node());
 			model->nodes.back().mesh = 0;
 			model->nodes[signatureStuntNodeIndex + i + signatureStuntChildCount].children.push_back(signatureStuntNodeIndex + i + signatureStuntChildCount + j + 1);
-			convertGenericRegion(triggerData->getSignatureStunt(i).getStuntElement(j), model->nodes[signatureStuntNodeIndex + i + signatureStuntChildCount + j + 1], j);
+			convertGenericRegion(triggerData->signatureStunts[i].getStuntElement(j), model->nodes[signatureStuntNodeIndex + i + signatureStuntChildCount + j + 1], j);
 			currentNodeCount++;
 		}
-		convertSignatureStunt(triggerData->getSignatureStunt(i), model->nodes[signatureStuntNodeIndex + i + signatureStuntChildCount], i);
+		convertSignatureStunt(triggerData->signatureStunts[i], model->nodes[signatureStuntNodeIndex + i + signatureStuntChildCount], i);
 		currentNodeCount++;
-		signatureStuntChildCount += triggerData->getSignatureStunt(i).getStuntElementCount();
-		model->scenes[0].nodes.push_back(signatureStuntNodeIndex + i + signatureStuntChildCount - triggerData->getSignatureStunt(i).getStuntElementCount());
+		signatureStuntChildCount += triggerData->signatureStunts[i].stuntElementCount;
+		model->scenes[0].nodes.push_back(signatureStuntNodeIndex + i + signatureStuntChildCount - triggerData->signatureStunts[i].stuntElementCount);
 	}
 	int killzoneNodeIndex = currentNodeCount;
 	int killzoneChildCount = 0;
-	for (int i = 0; i < triggerData->getKillzoneCount(); ++i)
+	for (int i = 0; i < triggerData->killzoneCount; ++i)
 	{
 		model->nodes.push_back(Node());
-		for (int j = 0; j < triggerData->getKillzone(i).getTriggerCount(); ++j)
+		for (int j = 0; j < triggerData->killzones[i].triggerCount; ++j)
 		{
 			model->nodes.push_back(Node());
 			model->nodes.back().mesh = 0;
 			model->nodes[killzoneNodeIndex + i + killzoneChildCount].children.push_back(killzoneNodeIndex + i + killzoneChildCount + j + 1);
-			convertGenericRegion(triggerData->getKillzone(i).getTrigger(j), model->nodes[killzoneNodeIndex + i + killzoneChildCount + j + 1], j);
+			convertGenericRegion(triggerData->killzones[i].getTrigger(j), model->nodes[killzoneNodeIndex + i + killzoneChildCount + j + 1], j);
 			currentNodeCount++;
 		}
-		convertKillzone(triggerData->getKillzone(i), model->nodes[killzoneNodeIndex + i + killzoneChildCount], i);
+		convertKillzone(triggerData->killzones[i], model->nodes[killzoneNodeIndex + i + killzoneChildCount], i);
 		currentNodeCount++;
-		killzoneChildCount += triggerData->getKillzone(i).getTriggerCount();
-		model->scenes[0].nodes.push_back(killzoneNodeIndex + i + killzoneChildCount - triggerData->getKillzone(i).getTriggerCount());
+		killzoneChildCount += triggerData->killzones[i].triggerCount;
+		model->scenes[0].nodes.push_back(killzoneNodeIndex + i + killzoneChildCount - triggerData->killzones[i].triggerCount);
 	}
 
 	// Remaining GenericRegion nodes
 	int genericRegionNodeIndex = currentNodeCount;
 	int currentGenericRegionNode = 0;
-	for (int i = 0; i < triggerData->getGenericRegionCount(); ++i)
+	for (int i = 0; i < triggerData->genericRegionCount; ++i)
 	{
-		if (!triggerRegionExists(triggerData->getGenericRegion(i), false))
+		if (!triggerRegionExists(triggerData->genericRegions[i], false))
 		{
 			model->nodes.push_back(Node());
 			model->nodes.back().mesh = 0;
-			convertGenericRegion(triggerData->getGenericRegion(i), model->nodes[genericRegionNodeIndex + currentGenericRegionNode], i);
+			convertGenericRegion(triggerData->genericRegions[i], model->nodes[genericRegionNodeIndex + currentGenericRegionNode], i);
 			model->scenes[0].nodes.push_back(genericRegionNodeIndex + currentGenericRegionNode);
 			currentGenericRegionNode++;
 			currentNodeCount++;
@@ -335,13 +335,13 @@ void Converter::convertTriggersToGLTF()
 	// Remaining TriggerRegion nodes
 	int triggerRegionNodeIndex = currentNodeCount;
 	int currentTriggerRegionNode = 0;
-	for (int i = 0; i < triggerData->getRegionCount(); ++i)
+	for (int i = 0; i < triggerData->regionCount; ++i)
 	{
-		if (!triggerRegionExists(triggerData->getTriggerRegion(i)))
+		if (!triggerRegionExists(triggerData->getRegion(i)))
 		{
 			model->nodes.push_back(Node());
 			model->nodes.back().mesh = 0;
-			convertTriggerRegion(triggerData->getTriggerRegion(i), model->nodes[triggerRegionNodeIndex + currentTriggerRegionNode], i);
+			convertTriggerRegion(triggerData->getRegion(i), model->nodes[triggerRegionNodeIndex + currentTriggerRegionNode], i);
 			model->scenes[0].nodes.push_back(triggerRegionNodeIndex + currentTriggerRegionNode);
 			currentTriggerRegionNode++;
 			currentNodeCount++;
@@ -350,20 +350,20 @@ void Converter::convertTriggersToGLTF()
 
 	// Point triggers
 	int roamingLocationNodeIndex = currentNodeCount;
-	for (int i = 0; i < triggerData->getRoamingLocationCount(); ++i)
+	for (int i = 0; i < triggerData->roamingLocationCount; ++i)
 	{
 		model->nodes.push_back(Node());
 		model->nodes.back().mesh = 0;
-		convertRoamingLocation(triggerData->getRoamingLocation(i), model->nodes[roamingLocationNodeIndex + i], i);
+		convertRoamingLocation(triggerData->roamingLocations[i], model->nodes[roamingLocationNodeIndex + i], i);
 		currentNodeCount++;
 		model->scenes[0].nodes.push_back(roamingLocationNodeIndex + i);
 	}
 	int spawnLocationNodeIndex = currentNodeCount;
-	for (int i = 0; i < triggerData->getSpawnLocationCount(); ++i)
+	for (int i = 0; i < triggerData->spawnLocationCount; ++i)
 	{
 		model->nodes.push_back(Node());
 		model->nodes.back().mesh = 0;
-		convertSpawnLocation(triggerData->getSpawnLocation(i), model->nodes[spawnLocationNodeIndex + i], i);
+		convertSpawnLocation(triggerData->spawnLocations[i], model->nodes[spawnLocationNodeIndex + i], i);
 		currentNodeCount++;
 		model->scenes[0].nodes.push_back(spawnLocationNodeIndex + i);
 	}
@@ -383,44 +383,44 @@ void Converter::convertTriggersToGLTF()
 
 bool Converter::triggerRegionExists(TriggerRegion region, bool checkGenericRegions)
 {
-	int32_t id = region.getId();
-	for (int i = 0; i < triggerData->getLandmarkCount(); ++i)
+	int32_t id = region.id;
+	for (int i = 0; i < triggerData->landmarkCount; ++i)
 	{
-		if (id == triggerData->getLandmark(i).getId())
+		if (id == triggerData->landmarks[i].id)
 			return true;
 	}
-	for (int i = 0; i < triggerData->getBlackspotCount(); ++i)
+	for (int i = 0; i < triggerData->blackspotCount; ++i)
 	{
-		if (id == triggerData->getBlackspot(i).getId())
+		if (id == triggerData->blackspots[i].id)
 			return true;
 	}
-	for (int i = 0; i < triggerData->getVfxBoxRegionCount(); ++i)
+	for (int i = 0; i < triggerData->vfxBoxRegionCount; ++i)
 	{
-		if (id == triggerData->getVfxBoxRegion(i).getId())
+		if (id == triggerData->vfxBoxRegions[i].id)
 			return true;
 	}
 	if (checkGenericRegions)
 	{
-		for (int i = 0; i < triggerData->getGenericRegionCount(); ++i)
+		for (int i = 0; i < triggerData->genericRegionCount; ++i)
 		{
-			if (id == triggerData->getGenericRegion(i).getId())
+			if (id == triggerData->genericRegions[i].id)
 				return true;
 		}
 		return false;
 	}
-	for (int i = 0; i < triggerData->getSignatureStuntCount(); ++i)
+	for (int i = 0; i < triggerData->signatureStuntCount; ++i)
 	{
-		for (int j = 0; j < triggerData->getSignatureStunt(i).getStuntElementCount(); ++j)
+		for (int j = 0; j < triggerData->signatureStunts[i].stuntElementCount; ++j)
 		{
-			if (id == triggerData->getSignatureStunt(i).getStuntElement(j).getId())
+			if (id == triggerData->signatureStunts[i].getStuntElement(j).id)
 				return true;
 		}
 	}
-	for (int i = 0; i < triggerData->getKillzoneCount(); ++i)
+	for (int i = 0; i < triggerData->killzoneCount; ++i)
 	{
-		for (int j = 0; j < triggerData->getKillzone(i).getTriggerCount(); ++j)
+		for (int j = 0; j < triggerData->killzones[i].triggerCount; ++j)
 		{
-			if (id == triggerData->getKillzone(i).getTrigger(j).getId())
+			if (id == triggerData->killzones[i].getTrigger(j).id)
 				return true;
 		}
 	}
@@ -429,10 +429,10 @@ bool Converter::triggerRegionExists(TriggerRegion region, bool checkGenericRegio
 
 void Converter::addTriggerRegionFields(TriggerRegion region, Value::Object& extras)
 {
-	extras["TriggerRegion ID"] = Value(region.getId());
-	extras["TriggerRegion region index"] = Value(region.getRegionIndex());
-	extras["TriggerRegion type"] = Value((uint8_t)region.getType());
-	extras["TriggerRegion unknown 0"] = Value(region.getUnk0());
+	extras["TriggerRegion ID"] = Value(region.id);
+	extras["TriggerRegion region index"] = Value(region.regionIndex);
+	extras["TriggerRegion type"] = Value((uint8_t)region.type);
+	extras["TriggerRegion unknown 0"] = Value(region.unk0);
 }
 
 void Converter::convertLandmark(Landmark landmark, Node& node, int index)
@@ -441,18 +441,18 @@ void Converter::convertLandmark(Landmark landmark, Node& node, int index)
 
 	Value::Object extras;
 	addTriggerRegionFields(landmark, extras);
-	extras["Design index"] = Value(landmark.getDesignIndex());
-	extras["District"] = Value(landmark.getDistrict());
-	extras["Is online"] = Value(landmark.getIsOnline());
+	extras["Design index"] = Value(landmark.designIndex);
+	extras["District"] = Value(landmark.district);
+	extras["Is online"] = Value((bool)(((uint8_t)landmark.flags & (uint8_t)Landmark::Flags::isOnline) != 0));
 	node.extras = Value(extras);
 
-	node.name = "Landmark " + std::to_string(index) + " (" + std::to_string(landmark.getId()) + ")";
+	node.name = "Landmark " + std::to_string(index) + " (" + std::to_string(landmark.id) + ")";
 }
 
 void Converter::convertStartingGrid(StartingGrid grid, Node& node, int index)
 {
 	for (int i = 0; i < 8; ++i)
-		addPointTransform(grid.getStartingPosition(i), grid.getStartingDirection(i), node);
+		addPointTransform(grid.startingPositions[i], grid.startingDirections[i], node);
 }
 
 void Converter::convertBlackspot(Blackspot blackspot, Node& node, int index)
@@ -461,35 +461,35 @@ void Converter::convertBlackspot(Blackspot blackspot, Node& node, int index)
 
 	Value::Object extras;
 	addTriggerRegionFields(blackspot, extras);
-	extras["Score type"] = Value((uint8_t)blackspot.getScoreType());
-	extras["Score amount"] = Value(blackspot.getScoreAmount());
+	extras["Score type"] = Value((uint8_t)blackspot.scoreType);
+	extras["Score amount"] = Value(blackspot.scoreAmount);
 	node.extras = Value(extras);
 
-	node.name = "Blackspot " + std::to_string(index) + " (" + std::to_string(blackspot.getId()) + ")";
+	node.name = "Blackspot " + std::to_string(index) + " (" + std::to_string(blackspot.id) + ")";
 }
 
 void Converter::convertVfxBoxRegion(VFXBoxRegion vfxBoxRegion, Node& node, int index)
 {
 	addBoxRegionTransform(vfxBoxRegion, node);
 
-	node.name = "VFXBoxRegion " + std::to_string(index) + " (" + std::to_string(vfxBoxRegion.getId()) + ")";
+	node.name = "VFXBoxRegion " + std::to_string(index) + " (" + std::to_string(vfxBoxRegion.id) + ")";
 }
 
 void Converter::convertSignatureStunt(SignatureStunt signatureStunt, Node& node, int index)
 {
 	Value::Object extras;
-	extras["ID"] = Value((int)signatureStunt.getId());
-	extras["Camera"] = Value((int)signatureStunt.getCamera());
+	extras["ID"] = Value((int)signatureStunt.id);
+	extras["Camera"] = Value((int)signatureStunt.camera);
 	node.extras = Value(extras);
 
-	node.name = "SignatureStunt " + std::to_string(index) + " (" + std::to_string(signatureStunt.getId()) + ")";
+	node.name = "SignatureStunt " + std::to_string(index) + " (" + std::to_string(signatureStunt.id) + ")";
 }
 
 void Converter::convertKillzone(Killzone killzone, Node& node, int index)
 {
 	Value::Array regionIds;
-	for (int i = 0; i < killzone.getRegionIdCount(); ++i)
-		regionIds.push_back(Value((int)killzone.getRegionId(i)));
+	for (int i = 0; i < killzone.regionIdCount; ++i)
+		regionIds.push_back(Value((int)killzone.regionIds[i]));
 
 	Value::Object extras;
 	extras["Region IDs"] = Value(regionIds);
@@ -504,18 +504,18 @@ void Converter::convertGenericRegion(GenericRegion region, Node& node, int index
 
 	Value::Object extras;
 	addTriggerRegionFields(region, extras);
-	extras["Group ID"] = Value(region.getGroupId());
-	extras["Camera cut 1"] = Value(region.getCameraCut1());
-	extras["Camera cut 2"] = Value(region.getCameraCut2());
-	extras["Camera type 1"] = Value((int16_t)region.getcameraType1());
-	extras["Camera type 2"] = Value((int16_t)region.getcameraType2());
-	extras["Type"] = Value((uint8_t)region.getType());
-	extras["Is one way"] = Value((bool)region.getIsOneWay());
+	extras["Group ID"] = Value(region.groupId);
+	extras["Camera cut 1"] = Value(region.cameraCut1);
+	extras["Camera cut 2"] = Value(region.cameraCut2);
+	extras["Camera type 1"] = Value((int16_t)region.cameraType1);
+	extras["Camera type 2"] = Value((int16_t)region.cameraType2);
+	extras["Type"] = Value((uint8_t)region.type);
+	extras["Is one way"] = Value((bool)region.isOneWay);
 	node.extras = Value(extras);
 
-	uint64_t id = region.getGroupId();
+	uint64_t id = region.groupId;
 	if (id == 0)
-		id = region.getId();
+		id = region.id;
 	node.name = "GenericRegion " + std::to_string(index) + " (" + std::to_string(id) + ")";
 }
 
@@ -523,15 +523,15 @@ void Converter::convertTriggerRegion(TriggerRegion triggerRegion, Node& node, in
 {
 	addBoxRegionTransform(triggerRegion, node);
 
-	node.name = "TriggerRegion " + std::to_string(index) + " (" + std::to_string(triggerRegion.getId()) + ")";
+	node.name = "TriggerRegion " + std::to_string(index) + " (" + std::to_string(triggerRegion.id) + ")";
 }
 
 void Converter::convertRoamingLocation(RoamingLocation location, Node& node, int index)
 {
-	addPointTransform(location.getPosition(), node);
+	addPointTransform(location.position, node);
 
 	Value::Object extras;
-	extras["District index"] = Value(location.getDistrictIndex());
+	extras["District index"] = Value(location.districtIndex);
 	node.extras = Value(extras);
 
 	node.name = "RoamingLocation " + std::to_string(index);
@@ -539,11 +539,11 @@ void Converter::convertRoamingLocation(RoamingLocation location, Node& node, int
 
 void Converter::convertSpawnLocation(SpawnLocation location, Node& node, int index)
 {
-	addPointTransform(location.getPosition(), location.getDirection(), node);
+	addPointTransform(location.position, location.direction, node);
 
 	Value::Object extras;
-	extras["Junkyard ID"] = Value((int)location.getJunkyardId());
-	extras["Type"] = Value((uint8_t)location.getType());
+	extras["Junkyard ID"] = Value((int)location.junkyardId);
+	extras["Type"] = Value((uint8_t)location.type);
 	node.extras = Value(extras);
 
 	node.name = "SpawnLocation " + std::to_string(index);

@@ -8,8 +8,8 @@ namespace BrnTrigger
 	// Sphere and line types are not supported.
 	struct BoxRegion
 	{
-		void read(DataStream& in);
-		void write(DataStream& out);
+		void read(DataStream& file);
+		void write(DataStream& file);
 
 		float32_t positionX = 0;
 		float32_t positionY = 0;

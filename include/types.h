@@ -17,10 +17,6 @@ struct Vector3
 	void read(DataStream& stream);
 	void write(DataStream& stream);
 
-	bool getIsVpu() { return isVpu; }
-
-	void setIsVpu(bool val) { isVpu = val; }
-
 	float x = 0;
 	float y = 0;
 	float z = 0;

@@ -27,12 +27,12 @@ public:
 
 	// Writes a pointer to the stream
 	template <typename T>
-	friend DataStream& operator<<(DataStream& s, T& ptr) requires(std::is_pointer_v<T>)
+	friend DataStream& operator<<(DataStream& s, T ptr) requires(std::is_pointer_v<T>)
 	{
 		if (!s.is64Bit)
-			s << (quint32&)ptr;
+			s << (quint32)ptr;
 		else
-			s << (quint64&)ptr;
+			s << (quint64)ptr;
 		return s;
 	}
 

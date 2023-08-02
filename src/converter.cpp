@@ -53,6 +53,13 @@ int Converter::getArgs(int argc, char* argv[])
 				inStream.setIs64Bit(true);
 			i++;
 		}
+		else if (strcmp(argv[i], "-f") == 0)
+		{
+			uint8_t filter = atoi(argv[i + 1]);
+			if (filter >= 0)
+				typeFilter = filter;
+			i++;
+		}
 		else
 		{
 			std::cerr << "Invalid option specified: " << argv[i];
@@ -99,8 +106,9 @@ int Converter::checkArgs(int argc, char* argv[])
 
 void Converter::showUsage()
 {
-	std::cout << "Usage: TriggersToGLTF [-p PLATFORM] <input file> <output file>\n\n"
-		<< "Options:\n -p   File platform. PS3, X360, PC, PS4, or NX. Default: PC";
+	std::cout << "Usage: TriggersToGLTF [options] <input file> <output file>\n\n"
+		<< "Options:\n -p   File platform. PS3, X360, PC, PS4, or NX. Default: PC\n"
+		<< " -f   GenericRegion type filter (an integer number). By default, all are converted.";
 }
 
 void Converter::readTriggerData()
@@ -240,88 +248,13 @@ void Converter::convertTriggersToGLTF()
 	// Create nodes
 	// TriggerRegion derived nodes
 	int currentNodeCount = 0;
-	int landmarkNodeIndex = currentNodeCount;
-	int landmarkChildCount = 0;
-	for (int i = 0; i < triggerData->landmarkCount; ++i)
-	{
-		model->nodes.push_back(Node());
-		model->nodes.back().mesh = 0;
-		for (int j = 0; j < triggerData->landmarks[i].startingGridCount; ++j)
-		{
-			model->nodes.push_back(Node());
-			model->nodes.back().mesh = 0;
-			model->nodes[landmarkNodeIndex + i + landmarkChildCount].children.push_back(landmarkNodeIndex + i + landmarkChildCount + j + 1);
-			convertStartingGrid(triggerData->landmarks[i].startingGrids[j], model->nodes[landmarkNodeIndex + i + landmarkChildCount + j + 1], j);
-			currentNodeCount++;
-		}
-		convertLandmark(triggerData->landmarks[i], model->nodes[i + landmarkNodeIndex], i);
-		currentNodeCount++;
-		landmarkChildCount += triggerData->landmarks[i].startingGridCount;
-		model->scenes[0].nodes.push_back(landmarkNodeIndex + i + landmarkChildCount - triggerData->landmarks[i].startingGridCount);
-	}
-	int blackspotNodeIndex = currentNodeCount;
-	for (int i = 0; i < triggerData->blackspotCount; ++i)
-	{
-		model->nodes.push_back(Node());
-		model->nodes.back().mesh = 0;
-		convertBlackspot(triggerData->blackspots[i], model->nodes[blackspotNodeIndex + i], i);
-		currentNodeCount++;
-		model->scenes[0].nodes.push_back(blackspotNodeIndex + i);
-	}
-	int vfxBoxRegionNodeIndex = currentNodeCount;
-	for (int i = 0; i < triggerData->vfxBoxRegionCount; ++i)
-	{
-		model->nodes.push_back(Node());
-		model->nodes.back().mesh = 0;
-		convertVfxBoxRegion(triggerData->vfxBoxRegions[i], model->nodes[vfxBoxRegionNodeIndex + i], i);
-		currentNodeCount++;
-		model->scenes[0].nodes.push_back(vfxBoxRegionNodeIndex + i);
-	}
-
-	// Nodes with GenericRegion arrays
-	int signatureStuntNodeIndex = currentNodeCount;
-	int signatureStuntChildCount = 0;
-	for (int i = 0; i < triggerData->signatureStuntCount; ++i)
-	{
-		model->nodes.push_back(Node());
-		for (int j = 0; j < triggerData->signatureStunts[i].stuntElementCount; ++j)
-		{
-			model->nodes.push_back(Node());
-			model->nodes.back().mesh = 0;
-			model->nodes[signatureStuntNodeIndex + i + signatureStuntChildCount].children.push_back(signatureStuntNodeIndex + i + signatureStuntChildCount + j + 1);
-			convertGenericRegion(triggerData->signatureStunts[i].getStuntElement(j), model->nodes[signatureStuntNodeIndex + i + signatureStuntChildCount + j + 1], j);
-			currentNodeCount++;
-		}
-		convertSignatureStunt(triggerData->signatureStunts[i], model->nodes[signatureStuntNodeIndex + i + signatureStuntChildCount], i);
-		currentNodeCount++;
-		signatureStuntChildCount += triggerData->signatureStunts[i].stuntElementCount;
-		model->scenes[0].nodes.push_back(signatureStuntNodeIndex + i + signatureStuntChildCount - triggerData->signatureStunts[i].stuntElementCount);
-	}
-	int killzoneNodeIndex = currentNodeCount;
-	int killzoneChildCount = 0;
-	for (int i = 0; i < triggerData->killzoneCount; ++i)
-	{
-		model->nodes.push_back(Node());
-		for (int j = 0; j < triggerData->killzones[i].triggerCount; ++j)
-		{
-			model->nodes.push_back(Node());
-			model->nodes.back().mesh = 0;
-			model->nodes[killzoneNodeIndex + i + killzoneChildCount].children.push_back(killzoneNodeIndex + i + killzoneChildCount + j + 1);
-			convertGenericRegion(triggerData->killzones[i].getTrigger(j), model->nodes[killzoneNodeIndex + i + killzoneChildCount + j + 1], j);
-			currentNodeCount++;
-		}
-		convertKillzone(triggerData->killzones[i], model->nodes[killzoneNodeIndex + i + killzoneChildCount], i);
-		currentNodeCount++;
-		killzoneChildCount += triggerData->killzones[i].triggerCount;
-		model->scenes[0].nodes.push_back(killzoneNodeIndex + i + killzoneChildCount - triggerData->killzones[i].triggerCount);
-	}
-
+	
 	// Remaining GenericRegion nodes
 	int genericRegionNodeIndex = currentNodeCount;
 	int currentGenericRegionNode = 0;
 	for (int i = 0; i < triggerData->genericRegionCount; ++i)
 	{
-		if (!triggerRegionExists(triggerData->genericRegions[i], false))
+		if ((uint8_t)triggerData->genericRegions[i].type == typeFilter)
 		{
 			model->nodes.push_back(Node());
 			model->nodes.back().mesh = 0;
@@ -330,42 +263,6 @@ void Converter::convertTriggersToGLTF()
 			currentGenericRegionNode++;
 			currentNodeCount++;
 		}
-	}
-
-	// Remaining TriggerRegion nodes
-	int triggerRegionNodeIndex = currentNodeCount;
-	int currentTriggerRegionNode = 0;
-	for (int i = 0; i < triggerData->regionCount; ++i)
-	{
-		if (!triggerRegionExists(triggerData->getRegion(i)))
-		{
-			model->nodes.push_back(Node());
-			model->nodes.back().mesh = 0;
-			convertTriggerRegion(triggerData->getRegion(i), model->nodes[triggerRegionNodeIndex + currentTriggerRegionNode], i);
-			model->scenes[0].nodes.push_back(triggerRegionNodeIndex + currentTriggerRegionNode);
-			currentTriggerRegionNode++;
-			currentNodeCount++;
-		}
-	}
-
-	// Point triggers
-	int roamingLocationNodeIndex = currentNodeCount;
-	for (int i = 0; i < triggerData->roamingLocationCount; ++i)
-	{
-		model->nodes.push_back(Node());
-		model->nodes.back().mesh = 0;
-		convertRoamingLocation(triggerData->roamingLocations[i], model->nodes[roamingLocationNodeIndex + i], i);
-		currentNodeCount++;
-		model->scenes[0].nodes.push_back(roamingLocationNodeIndex + i);
-	}
-	int spawnLocationNodeIndex = currentNodeCount;
-	for (int i = 0; i < triggerData->spawnLocationCount; ++i)
-	{
-		model->nodes.push_back(Node());
-		model->nodes.back().mesh = 0;
-		convertSpawnLocation(triggerData->spawnLocations[i], model->nodes[spawnLocationNodeIndex + i], i);
-		currentNodeCount++;
-		model->scenes[0].nodes.push_back(spawnLocationNodeIndex + i);
 	}
 
 	// Set up asset

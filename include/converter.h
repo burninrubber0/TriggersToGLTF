@@ -25,6 +25,7 @@ private:
 	DataStream inStream;
 	std::string inFileName;
 	std::string outFileName;
+	uint8_t typeFilter = -1;
 
 	TriggerData* triggerData = nullptr;
 

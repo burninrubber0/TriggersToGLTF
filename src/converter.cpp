@@ -22,6 +22,8 @@ Converter::Converter(int argc, char* argv[])
 		return;
 
 	readTriggerData();
+	if (!profileFileName.empty())
+		readProfileTriggers();
 	convertTriggersToGLTF();
 }
 
@@ -58,6 +60,12 @@ int Converter::getArgs(int argc, char* argv[])
 			uint8_t filter = atoi(argv[i + 1]);
 			if (filter >= 0)
 				typeFilter = filter;
+			i++;
+		}
+		else if (strcmp(argv[i], "-s") == 0)
+		{
+			profileFileName = argv[i + 1];
+			// TODO: Check profile validity
 			i++;
 		}
 		else
@@ -116,6 +124,88 @@ void Converter::readTriggerData()
 	inStream.open(QIODevice::ReadOnly);
 	triggerData->read(inStream);
 	inStream.close();
+}
+
+void Converter::readProfileTriggers()
+{
+	DataStream profile;
+	profile.setDevice(new QFile(QString::fromStdString(profileFileName)));
+	profile.open(QIODevice::ReadOnly);
+
+	// BPR PC support only for now. No checks
+	int base = 0x1D246; // Profile start offset
+	int stunts = base + 0x75E8; // Stunt elements offset
+	int alloc = 512; // Number of stunt elements allocated per type
+	int jumpCount = 0;
+	int smashCount = 0;
+	int billboardCount = 0;
+	profile.seek(stunts + alloc * 8);
+	profile >> jumpCount;
+	profile.seek(stunts + alloc * 8 * 2 + 8);
+	profile >> smashCount;
+	profile.seek(stunts + alloc * 8 * 3 + 8 * 2);
+	profile >> billboardCount;
+	uint64_t tmpId = 0;
+	profile.seek(stunts); // Jumps
+	for (int i = 0; i < jumpCount; ++i)
+	{
+		profile >> tmpId;
+		hitTriggerIds.append(tmpId);
+	}
+	profile.seek(stunts + alloc * 8 + 8); // Smashes
+	for (int i = 0; i < smashCount; ++i)
+	{
+		profile >> tmpId;
+		hitTriggerIds.append(tmpId);
+	}
+	profile.seek(stunts + alloc * 8 * 2 + 8 * 2); // Billboards
+	for (int i = 0; i < billboardCount; ++i)
+	{
+		profile >> tmpId;
+		hitTriggerIds.append(tmpId);
+	}
+
+	// Island collectibles
+	int bsi = base + 0x79040;
+	int bsiBillboards = bsi + 0x31C;
+	int bsiSmashes = bsi + 0x488;
+	int bsiJumps = bsi + 0x6E4;
+	int bsiBillboardAlloc = 45;
+	int bsiSmashAlloc = 75;
+	int bsiJumpAlloc = 15;
+	int bsiBillboardCount = 0;
+	int bsiSmashCount = 0;
+	int bsiJumpCount = 0;
+	profile.seek(bsiBillboards + bsiBillboardAlloc * 8);
+	profile >> bsiBillboardCount;
+	profile.seek(bsiSmashes + bsiSmashAlloc + 8);
+	profile >> bsiSmashCount;
+	profile.seek(bsiJumps + bsiJumpAlloc * 8);
+	profile >> bsiJumpCount;
+	uint32_t tmpBsiId = 0;
+	profile.seek(bsiBillboards); // Island billboards
+	for (int i = 0; i < bsiBillboardCount; ++i)
+	{
+		profile >> tmpBsiId;
+		profile.skip(4);
+		hitTriggerIds.append((uint64_t)tmpBsiId);
+	}
+	profile.seek(bsiSmashes);
+	for (int i = 0; i < bsiSmashCount; ++i)
+	{
+		profile >> tmpBsiId;
+		profile.skip(4);
+		hitTriggerIds.append((uint64_t)tmpBsiId);
+	}
+	profile.seek(bsiJumps);
+	for (int i = 0; i < bsiJumpCount; ++i)
+	{
+		profile >> tmpBsiId;
+		profile.skip(4);
+		hitTriggerIds.append((uint64_t)tmpBsiId);
+	}
+
+	profile.close();
 }
 
 // Creates a file with the box regions converted to triangles
@@ -256,6 +346,11 @@ void Converter::convertTriggersToGLTF()
 	{
 		if ((uint8_t)triggerData->genericRegions[i].type == typeFilter)
 		{
+			// Skip gathered collectibles
+			if (hitTriggerIds.contains((uint64_t)triggerData->genericRegions[i].id)
+				|| hitTriggerIds.contains((uint64_t)triggerData->genericRegions[i].groupId))
+				continue;
+
 			model->nodes.push_back(Node());
 			model->nodes.back().mesh = 0;
 			convertGenericRegion(triggerData->genericRegions[i], model->nodes[genericRegionNodeIndex + currentGenericRegionNode], i);

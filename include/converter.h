@@ -26,8 +26,10 @@ private:
 	std::string inFileName;
 	std::string outFileName;
 	uint8_t typeFilter = -1;
+	std::string profileFileName;
 
 	TriggerData* triggerData = nullptr;
+	QList<uint64_t> hitTriggerIds;
 
 	const int minArgCount = 3;
 	int getArgs(int argc, char* argv[]);
@@ -35,6 +37,7 @@ private:
 	void showUsage();
 
 	void readTriggerData();
+	void readProfileTriggers();
 	Buffer createGLTFBuffer();
 	void writeBoxRegion(DataStream& stream);
 	Vector4 EulerToQuatRot(Vector3 euler);

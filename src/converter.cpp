@@ -48,11 +48,23 @@ int Converter::getArgs(int argc, char* argv[])
 		{
 			QString platform = argv[i + 1];
 			if (platform == "PC")
+				this->platform = Platform::PC;
+			else if (platform == "PS3")
+				this->platform = Platform::PS3;
+			else if (platform == "PS4")
+				this->platform = Platform::PS4;
+			else if (platform == "X360")
+				this->platform = Platform::X360;
+			else if (platform == "NX")
+				this->platform = Platform::NX;
+
+			if (this->platform == Platform::PC)
 				return 0;
-			else if (platform == "PS3" || platform == "X360")
+			else if (this->platform == Platform::PS3 || this->platform == Platform::X360)
 				inStream.setByteOrder(QDataStream::BigEndian);
-			else if (platform == "PS4" || platform == "NX")
+			else if (this->platform == Platform::PS4 || this->platform == Platform::NX)
 				inStream.setIs64Bit(true);
+
 			i++;
 		}
 		else if (strcmp(argv[i], "-f") == 0)
@@ -65,7 +77,6 @@ int Converter::getArgs(int argc, char* argv[])
 		else if (strcmp(argv[i], "-s") == 0)
 		{
 			profileFileName = argv[i + 1];
-			// TODO: Check profile validity
 			i++;
 		}
 		else
@@ -115,8 +126,11 @@ int Converter::checkArgs(int argc, char* argv[])
 void Converter::showUsage()
 {
 	std::cout << "Usage: TriggersToGLTF [options] <input file> <output file>\n\n"
-		<< "Options:\n -p   File platform. PS3, X360, PC, PS4, or NX. Default: PC\n"
-		<< " -f   GenericRegion type filter (an integer number). By default, all are converted.";
+		<< "Options:\n"
+		<< " -p   File platform. PS3, X360, PC, PS4, or NX. Default: PC\n"
+		<< " -f   GenericRegion type filter (an integer number). By default, all are converted.\n"
+		<< " -s   Export only triggers not present in the provided savegame.\n"
+		<< "      Should be used with filters 8, 9, or 13 (collectibles).";
 }
 
 void Converter::readTriggerData()
@@ -132,10 +146,16 @@ void Converter::readProfileTriggers()
 	profile.setDevice(new QFile(QString::fromStdString(profileFileName)));
 	profile.open(QIODevice::ReadOnly);
 
-	// BPR PC support only for now. No checks
-	int base = 0x1D246; // Profile start offset
+	// Set offsets based on platform
+	int base = 0; // Profile start offset
+	if (platform == Platform::X360)
+		base = 0x1C;
+	else if (platform == Platform::PC)
+		base = 0x1D246;
 	int stunts = base + 0x75E8; // Stunt elements offset
-	int alloc = 512; // Number of stunt elements allocated per type
+	const int alloc = 512; // Number of stunt elements allocated per type
+
+	// Get stunt element counts
 	int jumpCount = 0;
 	int smashCount = 0;
 	int billboardCount = 0;
@@ -145,34 +165,52 @@ void Converter::readProfileTriggers()
 	profile >> smashCount;
 	profile.seek(stunts + alloc * 8 * 3 + 8 * 2);
 	profile >> billboardCount;
-	uint64_t tmpId = 0;
-	profile.seek(stunts); // Jumps
-	for (int i = 0; i < jumpCount; ++i)
+
+	// Read triggers
+	readStuntElements(profile, stunts, jumpCount); // Jumps
+	readStuntElements(profile, stunts + alloc * 8 + 8, smashCount); // Smashes
+	readStuntElements(profile, stunts + alloc * 8 * 2 + 8 * 2, smashCount); // Billboards
+
+	// Make sure this is not the original PC game,
+	// because that version does not have the island
+	if (platform == Platform::PC)
 	{
-		profile >> tmpId;
-		hitTriggerIds.append(tmpId);
-	}
-	profile.seek(stunts + alloc * 8 + 8); // Smashes
-	for (int i = 0; i < smashCount; ++i)
-	{
-		profile >> tmpId;
-		hitTriggerIds.append(tmpId);
-	}
-	profile.seek(stunts + alloc * 8 * 2 + 8 * 2); // Billboards
-	for (int i = 0; i < billboardCount; ++i)
-	{
-		profile >> tmpId;
-		hitTriggerIds.append(tmpId);
+		QFileInfo info(QString::fromStdString(profileFileName));
+		if (info.size() == 0x5D246)
+		{
+			profile.close();
+			return;
+		}
 	}
 
-	// Island collectibles
-	int bsi = base + 0x79040;
+	// Island offsets
+	int bsi = 0;
+	switch (platform)
+	{
+	case Platform::PS3:
+		bsi = 0x30648;
+		break;
+	case Platform::X360:
+		bsi = 0x2F4E0;
+		break;
+	case Platform::PS4:
+		bsi = 0x79B78;
+		break;
+	case Platform::PC:
+		bsi = 79040;
+		break;
+	case Platform::NX:
+		bsi = 0x7AE68;
+		break;
+	}
+
+	// Get stunt element details
 	int bsiBillboards = bsi + 0x31C;
 	int bsiSmashes = bsi + 0x488;
 	int bsiJumps = bsi + 0x6E4;
-	int bsiBillboardAlloc = 45;
-	int bsiSmashAlloc = 75;
-	int bsiJumpAlloc = 15;
+	const int bsiBillboardAlloc = 45;
+	const int bsiSmashAlloc = 75;
+	const int bsiJumpAlloc = 15;
 	int bsiBillboardCount = 0;
 	int bsiSmashCount = 0;
 	int bsiJumpCount = 0;
@@ -182,30 +220,36 @@ void Converter::readProfileTriggers()
 	profile >> bsiSmashCount;
 	profile.seek(bsiJumps + bsiJumpAlloc * 8);
 	profile >> bsiJumpCount;
-	uint32_t tmpBsiId = 0;
-	profile.seek(bsiBillboards); // Island billboards
-	for (int i = 0; i < bsiBillboardCount; ++i)
-	{
-		profile >> tmpBsiId;
-		profile.skip(4);
-		hitTriggerIds.append((uint64_t)tmpBsiId);
-	}
-	profile.seek(bsiSmashes);
-	for (int i = 0; i < bsiSmashCount; ++i)
-	{
-		profile >> tmpBsiId;
-		profile.skip(4);
-		hitTriggerIds.append((uint64_t)tmpBsiId);
-	}
-	profile.seek(bsiJumps);
-	for (int i = 0; i < bsiJumpCount; ++i)
-	{
-		profile >> tmpBsiId;
-		profile.skip(4);
-		hitTriggerIds.append((uint64_t)tmpBsiId);
-	}
+
+	// Read island triggers
+	readIslandStuntElements(profile, bsiBillboards, bsiBillboardCount); // Island billboards
+	readIslandStuntElements(profile, bsiSmashes, bsiSmashCount); // Island smashes
+	readIslandStuntElements(profile, bsiJumps, bsiJumpCount); // Island jumps
 
 	profile.close();
+}
+
+void Converter::readStuntElements(DataStream& stream, int offset, int count)
+{
+	uint64_t tmpId = 0;
+	stream.seek(offset);
+	for (int i = 0; i < count; ++i)
+	{
+		stream >> tmpId;
+		hitTriggerIds.append(tmpId);
+	}
+}
+
+void Converter::readIslandStuntElements(DataStream& stream, int offset, int count)
+{
+	uint32_t tmpId = 0;
+	stream.seek(offset);
+	for (int i = 0; i < count; ++i)
+	{
+		stream >> tmpId;
+		stream.skip(4);
+		hitTriggerIds.append((uint64_t)tmpId);
+	}
 }
 
 // Creates a file with the box regions converted to triangles

@@ -21,6 +21,15 @@ public:
 	int result = 0;
 
 private:
+	enum class Platform
+	{
+		PS3,
+		X360,
+		PC,
+		PS4,
+		NX
+	} platform = Platform::PC;
+
 	// For file reading
 	DataStream inStream;
 	std::string inFileName;
@@ -38,6 +47,8 @@ private:
 
 	void readTriggerData();
 	void readProfileTriggers();
+	void readStuntElements(DataStream& stream, int offset, int count);
+	void readIslandStuntElements(DataStream& stream, int offset, int count);
 	Buffer createGLTFBuffer();
 	void writeBoxRegion(DataStream& stream);
 	Vector4 EulerToQuatRot(Vector3 euler);

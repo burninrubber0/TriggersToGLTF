@@ -36,7 +36,7 @@ public:
 		return s;
 	}
 
-	// callocs and reads data from the stream using DataStream's operator>>(DataStream&, T&) method
+	// callocs and reads data from the stream using DataStream's operator>>(DataStream&, T&)
 	template <typename T>
 	void cAllocAndQtRead(T*& entries, int count)
 	{
@@ -47,7 +47,7 @@ public:
 			*this >> entries[i];
 	}
 
-	// callocs and reads data from the stream using T's read(DataStream&) method
+	// callocs and reads data from the stream using T's read(DataStream&)
 	template <typename T>
 	void cAllocAndCustomRead(T*& entries, int count)
 	{
@@ -68,7 +68,8 @@ public:
 	// Reads a specified number of bytes from this stream to another stream, writing to a specified
 	// offset in the other stream. By default, this offset is the current offset of this stream.
 	// This is most useful for storing unknown data and padding to prevent data loss
-	void readRawData(DataStream& stream, quint32 length, qint64 position = -1);
+	// TODO: Come up with a more accurate name for this
+	void readRawData(DataStream& other, quint32 length, qint64 position = -1);
 
 	// Get the current offset the device is reading/writing from
 	qint64 pos();

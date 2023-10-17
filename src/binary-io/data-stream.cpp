@@ -41,10 +41,10 @@ void DataStream::writeString(QString string, quint64 length)
 // offset in the other stream. By default, this offset is the current offset of this stream.
 // This is most useful for storing unknown data and padding to prevent data loss
 // TODO: Come up with a more accurate name for this
-void DataStream::readRawData(DataStream& stream, quint32 length, qint64 position)
+void DataStream::readRawData(DataStream& other, quint32 length, qint64 position)
 {
-	position != -1 ? stream.seek(position) : stream.seek(pos());
-	stream.device()->write(device()->read(length));
+	position != -1 ? other.seek(position) : other.seek(pos());
+	other.device()->write(device()->read(length));
 }
 
 // Get the current offset the device is reading/writing from

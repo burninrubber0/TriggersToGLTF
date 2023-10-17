@@ -7,8 +7,8 @@ void TriggerData::read(DataStream& file)
 	file >> versionNumber;
 	file >> size;
 	file.skip(0x8);
-	playerStartPosition.readVPU(file);
-	playerStartDirection.readVPU(file);
+	playerStartPosition.read(file);
+	playerStartDirection.read(file);
 	file >> landmarks;
 	file >> landmarkCount;
 	file >> onlineLandmarkCount;
@@ -49,66 +49,6 @@ void TriggerData::read(DataStream& file)
 	file.cAllocAndQtRead(regions, regionCount);
 	for (int i = 0; i < regionCount; ++i)
 		file.cAllocAndCustomRead(regions[i], 1);
-}
-
-Landmark TriggerData::getLandmark(int index)
-{
-	return landmarks[index];
-}
-
-SignatureStunt TriggerData::getSignatureStunt(int index)
-{
-	return signatureStunts[index];
-}
-
-GenericRegion TriggerData::getGenericRegion(int index)
-{
-	return genericRegions[index];
-}
-
-Killzone TriggerData::getKillzone(int index)
-{
-	return killzones[index];
-}
-
-Blackspot TriggerData::getBlackspot(int index)
-{
-	return blackspots[index];
-}
-
-VFXBoxRegion TriggerData::getVfxBoxRegion(int index)
-{
-	return vfxBoxRegions[index];
-}
-
-RoamingLocation TriggerData::getRoamingLocation(int index)
-{
-	return roamingLocations[index];
-}
-
-SpawnLocation TriggerData::getSpawnLocation(int index)
-{
-	return spawnLocations[index];
-}
-
-TriggerRegion TriggerData::getTriggerRegion(int index)
-{
-	return regions[index][0];
-}
-
-// Returns the number of box regions
-int32_t TriggerData::getTotalRegionCount()
-{
-	int signatureStuntRegionCount = 0;
-	for (int i = 0; i < signatureStuntCount; ++i)
-		signatureStuntRegionCount += signatureStunts[i].getStuntElementCount();
-
-	int killzoneRegionCount = 0;
-	for (int i = 0; i < killzoneCount; ++i)
-		killzoneRegionCount += killzones[i].getTriggerCount();
-
-	return landmarkCount + signatureStuntRegionCount + genericRegionCount
-		+ killzoneRegionCount + blackspotCount + vfxBoxRegionCount + regionCount;
 }
 
 void BoxRegion::read(DataStream& file)
@@ -152,17 +92,21 @@ void Landmark::read(DataStream& file)
 	file.seek(nextLandmark);
 }
 
-StartingGrid Landmark::getStartingGrid(int index)
+StartingGrid::StartingGrid()
 {
-	return startingGrids[index];
+	for (int i = 0; i < 8; ++i)
+	{
+		startingPositions[i] = Vector3(true);
+		startingDirections[i] = Vector3(true);
+	}
 }
 
 void StartingGrid::read(DataStream& file)
 {
 	for (int i = 0; i < 8; ++i)
-		startingPositions[i].readVPU(file);
+		startingPositions[i].read(file);
 	for (int i = 0; i < 8; ++i)
-		startingDirections[i].readVPU(file);
+		startingDirections[i].read(file);
 }
 
 void SignatureStunt::read(DataStream& file)
@@ -180,11 +124,6 @@ void SignatureStunt::read(DataStream& file)
 		file.cAllocAndCustomRead(stuntElements[i], 1);
 
 	file.seek(nextSignatureStunt);
-}
-
-GenericRegion SignatureStunt::getStuntElement(int index)
-{
-	return stuntElements[index][0];
 }
 
 void GenericRegion::read(DataStream& file)
@@ -233,15 +172,15 @@ void VFXBoxRegion::read(DataStream& file)
 
 void RoamingLocation::read(DataStream& file)
 {
-	position.readVPU(file);
+	position.read(file);
 	file >> districtIndex;
 	file.skip(0xF);
 }
 
 void SpawnLocation::read(DataStream& file)
 {
-	position.readVPU(file);
-	direction.readVPU(file);
+	position.read(file);
+	direction.read(file);
 	file >> junkyardId;
 	file >> type;
 	file.skip(0x7);

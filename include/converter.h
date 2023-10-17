@@ -34,7 +34,7 @@ private:
 	DataStream inStream;
 	std::string inFileName;
 	std::string outFileName;
-	uint8_t typeFilter = -1;
+	int8_t typeFilter = -1;
 	std::string profileFileName;
 
 	TriggerData* triggerData = nullptr;
